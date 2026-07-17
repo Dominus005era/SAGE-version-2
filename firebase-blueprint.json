@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and learning progress",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "sageLevel": { "type": "string" },
+        "xp": { "type": "integer" },
+        "streak": { "type": "integer" },
+        "lastLoginDate": { "type": "string", "format": "date-time" },
+        "masteryScore": { "type": "integer" },
+        "categoryProgress": {
+          "type": "object",
+          "properties": {
+            "space": { "type": "integer" },
+            "science": { "type": "integer" },
+            "nature": { "type": "integer" },
+            "brain": { "type": "integer" }
+          }
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "theme": { "type": "string" },
+            "appLanguage": { "type": "string" },
+            "responseLanguage": { "type": "string" }
+          }
+        }
+      },
+      "required": ["userId", "xp"]
+    },
+    "KnowledgeItem": {
+      "title": "Knowledge Item",
+      "description": "A micro-learning fact or quiz",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["fact", "quiz"] },
+        "category": { "type": "string", "enum": ["space", "science", "nature", "brain"] },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "correctOptionIndex": { "type": "integer" },
+        "explanation": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "category", "content"]
+    },
+    "UserKnowledge": {
+      "title": "User Knowledge Mapping",
+      "description": "Tracks saved items and mistakes",
+      "type": "object",
+      "properties": {
+        "itemId": { "type": "string" },
+        "userId": { "type": "string" },
+        "isSaved": { "type": "boolean" },
+        "isMistake": { "type": "boolean" },
+        "lastExplanationSeen": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Public and private user profile data"
+    },
+    "/knowledge": {
+      "schema": "KnowledgeItem",
+      "description": "Global repository of learning content"
+    },
+    "/users/{userId}/saved": {
+      "schema": "UserKnowledge",
+      "description": "User's bookmarked facts"
+    },
+    "/users/{userId}/mistakes": {
+      "schema": "UserKnowledge",
+      "description": "Collection of failed quizzes with logic correction"
+    }
+  }
+}

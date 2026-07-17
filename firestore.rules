@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // --- User Validation ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['userId', 'xp']) &&
+             data.userId == request.auth.uid &&
+             data.xp is int && data.xp >= 0 &&
+             (data.get('username', '') is string && data.get('username', '').size() <= 50) &&
+             (data.get('sageLevel', 'Novice') is string && data.get('sageLevel', '').size() <= 30);
+    }
+
+    // --- Knowledge Validation ---
+    function isValidKnowledge(data) {
+      return data.type in ['fact', 'quiz'] &&
+             data.category in ['space', 'science', 'nature', 'brain'] &&
+             data.content is string && data.content.size() <= 2000;
+    }
+
+    // --- Rules ---
+
+    // 1. Users
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+        // Only allow certain fields to be updated by the client directly for simplicity in this demo
+        // In a real app, XP might be handled via Cloud Functions/Server
+        incoming().diff(existing()).affectedKeys().hasOnly(['username', 'avatarUrl', 'xp', 'streak', 'lastLoginDate', 'masteryScore', 'categoryProgress', 'settings'])
+      );
+      
+      // 2. User Subcollections (Saved & Mistakes)
+      match /saved/{saveId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && incoming().userId == userId;
+        allow delete: if isOwner(userId);
+      }
+
+      match /mistakes/{mistakeId} {
+        allow list: if isOwner(userId);
+        allow get: if isOwner(userId);
+        allow create, update: if isOwner(userId) && incoming().userId == userId;
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // 3. Knowledge Base
+    match /knowledge/{itemId} {
+      allow list: if isSignedIn(); // Allow searching/getting content
+      allow get: if isSignedIn();
+      allow write: if false; // Only admins can write, not implemented in client-side rules
+    }
+  }
+}

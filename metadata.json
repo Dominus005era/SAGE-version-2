@@ -1,0 +1,6 @@
+{
+  "name": "SAGE: Universal Insight",
+  "description": "Scenario-based Applied General Education. A gamified micro-learning app focusing on Space, Science, Nature, and Brain.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["Real-time Personalization", "AI Content Generation", "Gamified Learning"]
+}
