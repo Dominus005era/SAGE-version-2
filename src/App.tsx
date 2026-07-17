@@ -41,7 +41,9 @@ export default function App() {
   };
 
   useEffect(() => {
+    console.log("Firebase onAuthStateChanged subscription started.");
     return onAuthStateChanged(auth, async (u) => {
+      console.log("Firebase auth state changed. User:", u ? u.uid : "null");
       setUser(u);
       if (u) {
         await syncProfile(u);
@@ -49,20 +51,46 @@ export default function App() {
         setProfile(null);
         setCurrentItem(null);
         setLoading(false);
+        console.log("No user found. Loading set to false.");
       }
     });
   }, []);
 
   const syncProfile = async (u: User) => {
-    const userRef = doc(db, "users", u.uid);
-    const snap = await getDoc(userRef);
+    console.log("Syncing profile for:", u.uid);
+    try {
+      const userRef = doc(db, "users", u.uid);
+      console.log("Fetching user doc from Firestore...");
+      const snap = await getDoc(userRef);
 
-    if (snap.exists()) {
-      setProfile(snap.data() as UserProfile);
-    } else {
-      const newProfile: UserProfile = {
+      if (snap.exists()) {
+        console.log("User profile found in Firestore.");
+        setProfile(snap.data() as UserProfile);
+      } else {
+        console.log("Creating new user profile in Firestore...");
+        const newProfile: UserProfile = {
+          userId: u.uid,
+          username: u.displayName || "Novice Sage",
+          avatarUrl: u.photoURL || null,
+          sageLevel: "Novice",
+          xp: 0,
+          streak: 1,
+          lastLoginDate: new Date().toISOString(),
+          masteryScore: 0,
+          categoryProgress: { space: 10, science: 5, nature: 8, brain: 12 },
+          settings: { theme: 'dark', appLanguage: 'en', responseLanguage: 'auto' }
+        };
+        await setDoc(userRef, newProfile);
+        setProfile(newProfile);
+        console.log("New profile created successfully.");
+      }
+    } catch (error) {
+      console.error("Firestore sync error:", error);
+      // Fallback to local profile to prevent app hanging
+      console.log("Using offline fallback profile...");
+      setProfile({
         userId: u.uid,
-        username: u.displayName || "Novice Sage",
+        username: u.displayName || "Offline Sage",
         avatarUrl: u.photoURL || null,
         sageLevel: "Novice",
         xp: 0,
@@ -71,12 +99,13 @@ export default function App() {
         masteryScore: 0,
         categoryProgress: { space: 10, science: 5, nature: 8, brain: 12 },
         settings: { theme: 'dark', appLanguage: 'en', responseLanguage: 'auto' }
-      };
-      await setDoc(userRef, newProfile);
-      setProfile(newProfile);
+      });
+    } finally {
+      setLoading(false);
+      console.log("Profile sync finalized. Loading set to false.");
     }
-    setLoading(false);
   };
+
 
   const getNextItem = async (category?: Category) => {
     setGenerating(true);
