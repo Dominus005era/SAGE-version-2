@@ -60,14 +60,22 @@ export default function App() {
     console.log("Syncing profile for:", u.uid);
     try {
       const userRef = doc(db, "users", u.uid);
-      console.log("Fetching user doc from Firestore...");
-      const snap = await getDoc(userRef);
+      console.log("Fetching user doc from Firestore (with 3s timeout)...");
+      
+      const getDocWithTimeout = Promise.race([
+        getDoc(userRef),
+        new Promise<any>((_, reject) => 
+          setTimeout(() => reject(new Error("Firestore connection timed out after 3 seconds")), 3000)
+        )
+      ]);
+
+      const snap = await getDocWithTimeout;
 
       if (snap.exists()) {
         console.log("User profile found in Firestore.");
         setProfile(snap.data() as UserProfile);
       } else {
-        console.log("Creating new user profile in Firestore...");
+        console.log("Creating new user profile in Firestore (with 3s timeout)...");
         const newProfile: UserProfile = {
           userId: u.uid,
           username: u.displayName || "Novice Sage",
@@ -80,7 +88,15 @@ export default function App() {
           categoryProgress: { space: 10, science: 5, nature: 8, brain: 12 },
           settings: { theme: 'dark', appLanguage: 'en', responseLanguage: 'auto' }
         };
-        await setDoc(userRef, newProfile);
+
+        const setDocWithTimeout = Promise.race([
+          setDoc(userRef, newProfile),
+          new Promise<void>((_, reject) => 
+            setTimeout(() => reject(new Error("Firestore write timed out after 3 seconds")), 3000)
+          )
+        ]);
+
+        await setDocWithTimeout;
         setProfile(newProfile);
         console.log("New profile created successfully.");
       }
@@ -105,6 +121,7 @@ export default function App() {
       console.log("Profile sync finalized. Loading set to false.");
     }
   };
+
 
 
   const getNextItem = async (category?: Category) => {
