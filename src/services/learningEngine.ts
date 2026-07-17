@@ -1,7 +1,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Category, KnowledgeItem } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const apiKey = process.env.GEMINI_API_KEY || "dummy-gemini-api-key";
+
+if (!process.env.GEMINI_API_KEY) {
+  console.warn("WARNING: GEMINI_API_KEY environment variable is not defined. AI content generation will fail until you configure GEMINI_API_KEY in your .env.local file.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
+
 
 export async function generateMicroContent(category: Category, mode: 'fact' | 'quiz', language: string = 'english'): Promise<KnowledgeItem> {
   const prompt = mode === 'fact' 
