@@ -620,63 +620,36 @@ function PlatformAppContent() {
           <h1 className="text-4xl font-black tracking-tighter mb-1 uppercase italic text-white">SAGE</h1>
           <p className="text-[#94a3b8] mb-8 font-light text-xs tracking-[2px] uppercase">Scenario Applied General Education</p>
 
-          <form onSubmit={handleAuthSubmit} className="space-y-4 mb-8">
-            {authMode === 'register' && (
-              <input 
-                type="text" 
-                placeholder="Full Name" 
-                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-[#8b5cf6] text-white placeholder-zinc-500 transition-colors"
-                value={authName}
-                onChange={(e) => setAuthName(e.target.value)}
-              />
-            )}
-            <input 
-              type="email" 
-              placeholder="Email Address" 
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-[#3b82f6] text-white placeholder-zinc-500 transition-colors"
-              value={authEmail}
-              onChange={(e) => setAuthEmail(e.target.value)}
-            />
-            <input 
-              type="password" 
-              placeholder="Account Password"
-              className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-[#8b5cf6] text-white placeholder-zinc-500 transition-colors"
-              value={authPass}
-              onChange={(e) => setAuthPass(e.target.value)}
-            />
-            {authError && <p className="text-red-400 text-xs font-mono">{authError}</p>}
-            
-            <button 
-              type="submit"
-              className="w-full py-5 bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
-            >
-              <Zap className="w-5 h-5" />
-              {authMode === 'login' ? 'Firebase Cloud Access' : 'Create Cloud Profile'}
-            </button>
-          </form>
-
-          <div className="relative flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Global Sync</span>
-            <div className="flex-1 h-px bg-white/10" />
-          </div>
-
+          {/* Single Google Authentication Button */}
           <button 
             onClick={handleGoogleSyncClick}
-            className="w-full py-4 bg-white text-black rounded-2xl font-bold flex items-center justify-center gap-3 hover:translate-y-[-2px] transition-all shadow-md active:scale-[0.98]"
+            className="w-full py-4 bg-white text-slate-900 rounded-2xl font-extrabold text-sm flex items-center justify-center gap-3 hover:bg-zinc-100 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl border border-white/20"
           >
-            <Globe2 className="w-5 h-5 text-[#3b82f6]" />
-            Google Cloud Sync
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.26v3.15C3.25 21.3 7.31 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.26C.46 8.17 0 9.99 0 12s.46 3.83 1.26 5.42l4.02-3.15z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.26 6.58l4.02 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+              />
+            </svg>
+            Sign in with Google
           </button>
 
-          <p className="mt-8 text-xs text-white/40">
-            {authMode === 'login' ? "New operative?" : "Existing sage?"}
-            <button 
-              onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-              className="ml-2 text-[#3b82f6] font-bold hover:underline"
-            >
-              {authMode === 'login' ? 'Create Cloud Profile' : 'Access Cloud Vault'}
-            </button>
+          {authError && <p className="mt-4 text-red-400 text-xs font-semibold">{authError}</p>}
+
+          <p className="mt-8 text-[11px] font-semibold text-white/40">
+            Authenticated via Firebase Google Encryption
           </p>
         </motion.div>
       </div>
