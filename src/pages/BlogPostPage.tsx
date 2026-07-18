@@ -6,30 +6,22 @@ import { BLOG_POSTS } from '../data/blogPosts';
 import { ArrowLeft, Clock, Calendar, Download, Loader2 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
-// Helper to convert remote images into Base64 so html2canvas renders them with 0 CORS issues
-const fetchImageAsBase64 = (url: string): Promise<string> => {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'Anonymous';
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || 800;
-        canvas.height = img.naturalHeight || 500;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0);
-          resolve(canvas.toDataURL('image/jpeg', 0.95));
-        } else {
-          resolve(url);
-        }
-      } catch (e) {
-        resolve(url);
-      }
-    };
-    img.onerror = () => resolve(url);
-    img.src = url;
-  });
+// Helper to convert remote images into Base64 using fetch + FileReader
+// This eliminates canvas tainting completely because only data: URLs are rendered into html2canvas
+const fetchImageAsBase64 = async (url: string): Promise<string> => {
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) return '';
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) {
+    return '';
+  }
 };
 
 export function BlogPostPage() {
@@ -58,14 +50,15 @@ export function BlogPostPage() {
       let imgData = base64Image;
       if (!imgData && post.image) {
         imgData = await fetchImageAsBase64(post.image);
-        setBase64Image(imgData);
+        if (imgData) setBase64Image(imgData);
       }
 
       // 2. Resolve html2pdf factory across Vite module formats
       const pdfWorker = typeof html2pdf === 'function' ? html2pdf : (html2pdf as any).default || (window as any).html2pdf;
 
       if (!pdfWorker) {
-        throw new Error("PDF Worker initialization failed.");
+        window.print();
+        return;
       }
 
       const element = pdfTemplateRef.current;
@@ -85,8 +78,8 @@ export function BlogPostPage() {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2, 
-          useCORS: true, 
-          allowTaint: true,
+          useCORS: false, 
+          allowTaint: false,
           backgroundColor: '#ffffff',
           logging: false,
           scrollY: 0,
@@ -99,8 +92,8 @@ export function BlogPostPage() {
       // 4. Generate & Save PDF
       await pdfWorker().set(opt).from(element).save();
     } catch (err) {
-      console.error("PDF Generation error:", err);
-      alert("PDF generation failed. Please check browser permissions or try again.");
+      console.error("PDF Generation fallback trigger:", err);
+      window.print();
     } finally {
       // 5. Restore hidden off-screen state
       if (containerRef.current) {
@@ -230,15 +223,24 @@ export function BlogPostPage() {
             </p>
           </div>
 
-          {/* Hero Image */}
-          {post.image && (
-            <div className="mb-8 rounded-2xl overflow-hidden max-h-[340px] border border-slate-200 shadow-md">
+          {/* Hero Image (Rendered only when Base64 Data URL is ready to guarantee 0 canvas tainting) */}
+          {base64Image && base64Image.startsWith('data:image') ? (
+            <div className="mb-8 rounded-2xl overflow-hidden max-h-[320px] border border-slate-200 shadow-md">
               <img 
-                src={base64Image || post.image} 
+                src={base64Image} 
                 alt={post.title} 
                 className="w-full h-full object-cover" 
-                crossOrigin="anonymous" 
               />
+            </div>
+          ) : (
+            <div 
+              className="mb-8 rounded-2xl p-6 border border-slate-200 shadow-sm flex items-center justify-between"
+              style={{ background: `linear-gradient(135deg, ${post.color}15, #f8fafc)` }}
+            >
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">SAGE Deep Cognitive Analysis</span>
+                <h4 className="text-lg font-black text-slate-900 mt-1">{post.title}</h4>
+              </div>
             </div>
           )}
 
@@ -270,6 +272,22 @@ export function BlogPostPage() {
           line-height: 1.8;
           margin-bottom: 1.5rem;
           font-size: 1.125rem;
+        }
+
+        @media print {
+          header, footer, button, a {
+            display: none !important;
+          }
+          body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+          }
+          .prose h2 {
+            color: #000000 !important;
+          }
+          .prose p {
+            color: #333333 !important;
+          }
         }
       `}} />
 
