@@ -36,6 +36,7 @@ export function BlogPostPage() {
   const { id } = useParams();
   const post = BLOG_POSTS.find(p => p.id === id);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [base64Image, setBase64Image] = useState<string>('');
 
@@ -49,20 +50,35 @@ export function BlogPostPage() {
   }
 
   const handleDownloadPDF = async () => {
-    if (!pdfTemplateRef.current) return;
+    if (!pdfTemplateRef.current || !containerRef.current) return;
     setIsExporting(true);
 
     try {
-      // Preload image as Base64 data URL to eliminate CORS canvas tainting
+      // 1. Preload image as Base64 data URL
       let imgData = base64Image;
       if (!imgData && post.image) {
         imgData = await fetchImageAsBase64(post.image);
         setBase64Image(imgData);
       }
 
-      const element = pdfTemplateRef.current;
+      // 2. Resolve html2pdf factory across Vite module formats
+      const pdfWorker = typeof html2pdf === 'function' ? html2pdf : (html2pdf as any).default || (window as any).html2pdf;
 
-      // Configure html2pdf options for crisp white-paper publication quality
+      if (!pdfWorker) {
+        throw new Error("PDF Worker initialization failed.");
+      }
+
+      const element = pdfTemplateRef.current;
+      const container = containerRef.current;
+
+      // 3. Temporarily bring container into visible viewport flow for 100% accurate html2canvas capture
+      container.style.position = 'fixed';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.zIndex = '99999';
+      container.style.opacity = '1';
+      container.style.backgroundColor = '#ffffff';
+
       const opt = {
         margin: [0.4, 0.4, 0.4, 0.4],
         filename: `SAGE_${post.id}.pdf`,
@@ -72,16 +88,28 @@ export function BlogPostPage() {
           useCORS: true, 
           allowTaint: true,
           backgroundColor: '#ffffff',
-          logging: false
+          logging: false,
+          scrollY: 0,
+          scrollX: 0
         },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css'] }
       };
 
-      await html2pdf().set(opt).from(element).save();
+      // 4. Generate & Save PDF
+      await pdfWorker().set(opt).from(element).save();
     } catch (err) {
       console.error("PDF Generation error:", err);
+      alert("PDF generation failed. Please check browser permissions or try again.");
     } finally {
+      // 5. Restore hidden off-screen state
+      if (containerRef.current) {
+        containerRef.current.style.position = 'fixed';
+        containerRef.current.style.left = '-9999px';
+        containerRef.current.style.top = '0';
+        containerRef.current.style.zIndex = '-9999';
+        containerRef.current.style.opacity = '0';
+      }
       setIsExporting(false);
     }
   };
@@ -112,7 +140,7 @@ export function BlogPostPage() {
           <button 
             onClick={handleDownloadPDF}
             disabled={isExporting}
-            className="flex items-center gap-2.5 px-7 py-4 rounded-2xl font-bold text-white transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2.5 px-7 py-4 rounded-2xl font-bold text-white transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             style={{ background: post.color }}
           >
             {isExporting ? (
@@ -147,12 +175,14 @@ export function BlogPostPage() {
       {/* PUBLICATION-GRADE PDF TEMPLATE (Always Pure White Background & Dark Text) */}
       {/* ========================================================================= */}
       <div 
+        ref={containerRef}
         style={{ 
           position: 'fixed', 
           left: '-9999px', 
           top: '0', 
           width: '800px', 
           zIndex: -9999, 
+          opacity: 0,
           backgroundColor: '#ffffff',
           color: '#0f172a'
         }}
