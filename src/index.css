@@ -361,8 +361,50 @@
 
 .light-mode .bg-\[\#04040a\],
 .light-mode .bg-\[\#080816\],
-.light-mode .bg-\[\#08080f\] {
+.light-mode .bg-\[\#08080f\],
+.light-mode .bg-\[\#02020a\],
+.light-mode footer {
   background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.light-mode .footer-card {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05) !important;
+}
+
+.light-mode .footer-heading {
+  color: #0f172a !important;
+}
+
+.light-mode .footer-text,
+.light-mode .footer-subtext {
+  color: #475569 !important;
+}
+
+.light-mode .footer-link {
+  color: #64748b !important;
+}
+.light-mode .footer-link:hover {
+  color: #0f172a !important;
+}
+
+.light-mode .footer-copyright,
+.light-mode .footer-copyright-link {
+  color: #64748b !important;
+}
+.light-mode .footer-copyright-link:hover {
+  color: #0f172a !important;
+}
+
+.light-mode .footer-icon {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #475569 !important;
+}
+.light-mode .footer-icon:hover {
+  background-color: #f1f5f9 !important;
   color: #0f172a !important;
 }
 
