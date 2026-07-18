@@ -5,7 +5,7 @@ import { Twitter, Github, Linkedin, ArrowRight } from 'lucide-react';
 const COLUMNS = [
   {
     title: 'Platform',
-    links: ['Features', 'Methodology', 'Mission', 'Blog', 'Pricing', 'Community'],
+    links: ['Features', 'Methodology', 'Mission', 'Blog', 'Pricing'],
   },
   {
     title: 'Company',

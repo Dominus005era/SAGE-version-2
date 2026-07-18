@@ -5,7 +5,6 @@ import { PlatformPage } from "./pages/PlatformPage";
 import { MethodologyPage } from "./pages/MethodologyPage";
 import { MissionPage } from "./pages/MissionPage";
 import { FeaturesPage } from "./pages/FeaturesPage";
-import { CommunityPage } from "./pages/CommunityPage";
 import { BlogPage } from "./pages/BlogPage";
 import { BlogPostPage } from "./pages/BlogPostPage";
 import { AuthPage } from "./pages/AuthPage";
@@ -18,7 +17,6 @@ export default function App() {
       <Route path="/methodology" element={<MethodologyPage />} />
       <Route path="/mission" element={<MissionPage />} />
       <Route path="/features" element={<FeaturesPage />} />
-      <Route path="/community" element={<CommunityPage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/:id" element={<BlogPostPage />} />
       

@@ -902,9 +902,9 @@ export function LandingPage() {
                 <br />curious minds.
               </h2>
               <p className="text-[#94a3b8] text-xl mb-10">Compete on leaderboards, join learning clubs, tackle daily challenges, and connect with people who love to think.</p>
-              <Link to="/community">
+              <Link to="/app">
                 <motion.button whileHover={{ scale: 1.03 }} className="flex items-center gap-2 px-8 py-4 rounded-2xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-white font-bold transition-all">
-                  Join the Community <ArrowRight className="w-4 h-4" />
+                  Join the Platform <ArrowRight className="w-4 h-4" />
                 </motion.button>
               </Link>
             </div>

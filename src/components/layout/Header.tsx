@@ -4,7 +4,7 @@ import { motion, useScroll, AnimatePresence } from 'motion/react';
 import { Search, Globe2, Moon, Sun, Sparkles, Menu, X } from 'lucide-react';
 import { cn } from '../../lib/cn';
 
-const NAV_LINKS = ['Home', 'Platform', 'Methodology', 'Mission', 'Features', 'Blog', 'Community'];
+const NAV_LINKS = ['Home', 'Platform', 'Methodology', 'Mission', 'Features', 'Blog'];
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
