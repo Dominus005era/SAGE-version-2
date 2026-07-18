@@ -21,13 +21,13 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
   ];
 
   return (
-    <aside className="w-72 bg-[#080816]/90 border-r border-white/10 flex flex-col h-screen fixed left-0 top-0 z-30 backdrop-blur-xl">
+    <aside className="sidebar-container w-72 bg-[#080816]/90 border-r border-white/10 flex flex-col h-screen fixed left-0 top-0 z-30 backdrop-blur-xl">
       {/* Brand logo */}
-      <a href="/" className="h-20 flex items-center gap-3 px-8 border-b border-white/[0.05] hover:opacity-80 transition-opacity">
+      <a href="/" className="sidebar-header h-20 flex items-center gap-3 px-8 border-b border-white/[0.05] hover:opacity-80 transition-opacity">
         <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/20 shadow-md bg-[#04040a] flex items-center justify-center">
           <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
         </div>
-        <span className="text-xl font-black tracking-tighter uppercase italic text-white">SAGE</span>
+        <span className="sidebar-brand-text text-xl font-black tracking-tighter uppercase italic text-white">SAGE</span>
       </a>
 
       {/* Navigation list */}
@@ -40,8 +40,8 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-semibold text-sm ${
                 isActive 
-                  ? "bg-white/10 text-white shadow-lg border border-white/[0.08]" 
-                  : "text-[#94a3b8] hover:text-white hover:bg-white/[0.03] border border-transparent"
+                  ? "bg-white/10 text-white shadow-lg border border-white/[0.08] sidebar-link-active" 
+                  : "text-[#94a3b8] hover:text-white hover:bg-white/[0.03] border border-transparent sidebar-link"
               }`}
             >
               <span className={isActive ? "text-[#3b82f6]" : "text-[#475569]"}>{item.icon}</span>
@@ -52,7 +52,7 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
       </nav>
 
       {/* Profile/Footer */}
-      <div className="p-6 border-t border-white/[0.05] bg-black/20 flex flex-col gap-4">
+      <div className="sidebar-footer p-6 border-t border-white/[0.05] bg-black/20 flex flex-col gap-4">
         <div className="flex items-center gap-3">
           {user?.avatarUrl ? (
             <img 
@@ -66,10 +66,10 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
             </div>
           )}
           <div className="overflow-hidden">
-            <h4 className="font-bold text-white text-sm truncate">{user?.username || "Operative"}</h4>
+            <h4 className="sidebar-user-name font-bold text-white text-sm truncate">{user?.username || "Operative"}</h4>
             <div className="flex items-center gap-1.5 mt-0.5">
               <img src="/sage-logo.png" alt="SAGE Logo" className="w-3.5 h-3.5 object-cover rounded-full border border-white/20 shrink-0" />
-              <p className="text-[10px] text-[#3b82f6] font-bold uppercase tracking-wider truncate">
+              <p className="sidebar-user-level text-[10px] text-[#3b82f6] font-bold uppercase tracking-wider truncate">
                 {user?.sageLevel || "Novice Sage"}
               </p>
             </div>
@@ -78,7 +78,7 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
 
         <button 
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all font-bold text-xs"
+          className="sidebar-logout-btn w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all font-bold text-xs"
         >
           <LogOut className="w-4 h-4" />
           Terminate Session

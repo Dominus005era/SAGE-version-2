@@ -429,6 +429,60 @@
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
+/* Sidebar Light Mode adaptation */
+.light-mode aside,
+.light-mode .sidebar-container {
+  background-color: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.03) !important;
+}
+
+.light-mode .sidebar-header {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+.light-mode .sidebar-brand-text {
+  color: #0f172a !important;
+}
+
+.light-mode .sidebar-link-active {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+
+.light-mode .sidebar-link {
+  color: #64748b !important;
+}
+.light-mode .sidebar-link:hover {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.light-mode .sidebar-footer {
+  background-color: #f8fafc !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.light-mode .sidebar-user-name {
+  color: #0f172a !important;
+}
+
+.light-mode .sidebar-user-level {
+  color: #2563eb !important;
+}
+
+.light-mode .sidebar-logout-btn {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
+}
+.light-mode .sidebar-logout-btn:hover {
+  background-color: #fee2e2 !important;
+  color: #b91c1c !important;
+}
+
 .light-mode input, .light-mode textarea {
   background-color: #ffffff !important;
   border-color: rgba(0, 0, 0, 0.12) !important;
