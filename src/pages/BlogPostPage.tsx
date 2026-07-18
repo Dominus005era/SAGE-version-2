@@ -4,14 +4,41 @@ import { motion } from 'motion/react';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { BLOG_POSTS } from '../data/blogPosts';
-import { ArrowLeft, Clock, Calendar, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Download, Printer, Loader2 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
+
+// Helper to convert remote images into Base64 so html2canvas renders them with 0 CORS issues
+const fetchImageAsBase64 = (url: string): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 800;
+        canvas.height = img.naturalHeight || 500;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/jpeg', 0.95));
+        } else {
+          resolve(url);
+        }
+      } catch (e) {
+        resolve(url);
+      }
+    };
+    img.onerror = () => resolve(url);
+    img.src = url;
+  });
+};
 
 export function BlogPostPage() {
   const { id } = useParams();
   const post = BLOG_POSTS.find(p => p.id === id);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [base64Image, setBase64Image] = useState<string>('');
 
   if (!post) {
     return (
@@ -26,30 +53,44 @@ export function BlogPostPage() {
     if (!pdfTemplateRef.current) return;
     setIsExporting(true);
 
-    const element = pdfTemplateRef.current;
-    
-    // Configure html2pdf options for high-definition print quality
-    const opt = {
-      margin: [0.4, 0.4, 0.4, 0.4],
-      filename: `SAGE_${post.id}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { 
-        scale: 2, 
-        useCORS: true, 
-        backgroundColor: '#ffffff',
-        logging: false
-      },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
     try {
+      // Preload image as Base64 data URL to eliminate CORS canvas tainting
+      let imgData = base64Image;
+      if (!imgData && post.image) {
+        imgData = await fetchImageAsBase64(post.image);
+        setBase64Image(imgData);
+      }
+
+      const element = pdfTemplateRef.current;
+
+      // Configure html2pdf options for high-definition print quality
+      const opt = {
+        margin: [0.4, 0.4, 0.4, 0.4],
+        filename: `SAGE_${post.id}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true, 
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
+        },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css'] }
+      };
+
       await html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error("PDF Generation error:", err);
+      // Fallback to native print if html2pdf encounters an unhandled exception
+      window.print();
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const handleNativePrint = () => {
+    window.print();
   };
 
   return (
@@ -57,7 +98,7 @@ export function BlogPostPage() {
       <Header />
       
       {/* Hero Header */}
-      <div className="relative pt-32 pb-20 px-6 max-w-[900px] mx-auto z-10">
+      <div className="relative pt-32 pb-16 px-6 max-w-[900px] mx-auto z-10">
         <Link to="/blog" className="inline-flex items-center gap-2 text-[#94a3b8] hover:text-white transition-colors mb-8 font-semibold text-sm">
           <ArrowLeft className="w-4 h-4" /> Back to all articles
         </Link>
@@ -74,22 +115,31 @@ export function BlogPostPage() {
         <h1 className="text-4xl md:text-6xl font-black mb-8 leading-[1.1] text-white">{post.title}</h1>
         <p className="text-xl text-[#94a3b8] leading-relaxed border-l-4 pl-6" style={{ borderColor: post.color }}>{post.excerpt}</p>
         
-        <button 
-          onClick={handleDownloadPDF}
-          disabled={isExporting}
-          className="mt-8 flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white transition-all shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ background: post.color }}
-        >
-          {isExporting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Generating High-Res PDF...
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4" /> Export as PDF Document
-            </>
-          )}
-        </button>
+        <div className="mt-8 flex flex-wrap items-center gap-4">
+          <button 
+            onClick={handleDownloadPDF}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-white transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: post.color }}
+          >
+            {isExporting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Compiling High-Res PDF...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" /> Export Article as PDF
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleNativePrint}
+            className="flex items-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/15 border border-white/10 rounded-2xl font-bold text-white transition-all hover:scale-105 active:scale-95"
+          >
+            <Printer className="w-4 h-4" /> Print Document
+          </button>
+        </div>
       </div>
 
       {/* Featured Main Image */}
@@ -108,9 +158,19 @@ export function BlogPostPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* HIDDEN PUBLICATION-GRADE PDF TEMPLATE CONTAINER FOR HTML2PDF */}
+      {/* PUBLICATION-GRADE PDF TEMPLATE (Off-screen rendered for html2canvas) */}
       {/* ========================================================================= */}
-      <div className="overflow-hidden h-0 w-0 opacity-0 pointer-events-none absolute left-[-9999px] top-[-9999px]">
+      <div 
+        style={{ 
+          position: 'fixed', 
+          left: '-9999px', 
+          top: '0', 
+          width: '800px', 
+          zIndex: -9999, 
+          backgroundColor: '#ffffff',
+          color: '#0f172a'
+        }}
+      >
         <div 
           ref={pdfTemplateRef} 
           className="p-10 bg-white text-slate-900 font-sans"
@@ -156,7 +216,12 @@ export function BlogPostPage() {
           {/* Hero Image */}
           {post.image && (
             <div className="mb-8 rounded-2xl overflow-hidden max-h-[340px] border border-slate-200 shadow-md">
-              <img src={post.image} alt={post.title} className="w-full h-full object-cover" crossOrigin="anonymous" />
+              <img 
+                src={base64Image || post.image} 
+                alt={post.title} 
+                className="w-full h-full object-cover" 
+                crossOrigin="anonymous" 
+              />
             </div>
           )}
 
@@ -175,7 +240,7 @@ export function BlogPostPage() {
         </div>
       </div>
       
-      {/* Styles for article body in browser */}
+      {/* CSS Styles for article body in browser and native print styling */}
       <style dangerouslySetInnerHTML={{__html: `
         .prose h2 {
           color: white;
@@ -201,6 +266,22 @@ export function BlogPostPage() {
           font-size: 14px !important;
           line-height: 1.7 !important;
           margin-bottom: 1rem !important;
+        }
+
+        @media print {
+          header, footer, button, a {
+            display: none !important;
+          }
+          body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+          }
+          .prose h2 {
+            color: #000000 !important;
+          }
+          .prose p {
+            color: #333333 !important;
+          }
         }
       `}} />
 
