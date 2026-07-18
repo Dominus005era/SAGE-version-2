@@ -1,10 +1,9 @@
 import React, { useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { BLOG_POSTS } from '../data/blogPosts';
-import { ArrowLeft, Clock, Calendar, Download, Printer, Loader2 } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Download, Loader2 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 // Helper to convert remote images into Base64 so html2canvas renders them with 0 CORS issues
@@ -63,7 +62,7 @@ export function BlogPostPage() {
 
       const element = pdfTemplateRef.current;
 
-      // Configure html2pdf options for high-definition print quality
+      // Configure html2pdf options for crisp white-paper publication quality
       const opt = {
         margin: [0.4, 0.4, 0.4, 0.4],
         filename: `SAGE_${post.id}.pdf`,
@@ -82,15 +81,9 @@ export function BlogPostPage() {
       await html2pdf().set(opt).from(element).save();
     } catch (err) {
       console.error("PDF Generation error:", err);
-      // Fallback to native print if html2pdf encounters an unhandled exception
-      window.print();
     } finally {
       setIsExporting(false);
     }
-  };
-
-  const handleNativePrint = () => {
-    window.print();
   };
 
   return (
@@ -115,29 +108,22 @@ export function BlogPostPage() {
         <h1 className="text-4xl md:text-6xl font-black mb-8 leading-[1.1] text-white">{post.title}</h1>
         <p className="text-xl text-[#94a3b8] leading-relaxed border-l-4 pl-6" style={{ borderColor: post.color }}>{post.excerpt}</p>
         
-        <div className="mt-8 flex flex-wrap items-center gap-4">
+        <div className="mt-8 flex items-center gap-4">
           <button 
             onClick={handleDownloadPDF}
             disabled={isExporting}
-            className="flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold text-white transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2.5 px-7 py-4 rounded-2xl font-bold text-white transition-all shadow-xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: post.color }}
           >
             {isExporting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Compiling High-Res PDF...
+                <Loader2 className="w-5 h-5 animate-spin" /> Compiling High-Res PDF...
               </>
             ) : (
               <>
-                <Download className="w-4 h-4" /> Export Article as PDF
+                <Download className="w-5 h-5" /> Export Article as PDF
               </>
             )}
-          </button>
-
-          <button
-            onClick={handleNativePrint}
-            className="flex items-center gap-2 px-6 py-3.5 bg-white/10 hover:bg-white/15 border border-white/10 rounded-2xl font-bold text-white transition-all hover:scale-105 active:scale-95"
-          >
-            <Printer className="w-4 h-4" /> Print Document
           </button>
         </div>
       </div>
@@ -158,7 +144,7 @@ export function BlogPostPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* PUBLICATION-GRADE PDF TEMPLATE (Off-screen rendered for html2canvas) */}
+      {/* PUBLICATION-GRADE PDF TEMPLATE (Always Pure White Background & Dark Text) */}
       {/* ========================================================================= */}
       <div 
         style={{ 
@@ -173,6 +159,7 @@ export function BlogPostPage() {
       >
         <div 
           ref={pdfTemplateRef} 
+          data-pdf-template="true"
           className="p-10 bg-white text-slate-900 font-sans"
           style={{ width: '800px', backgroundColor: '#ffffff', color: '#0f172a', fontFamily: 'Arial, sans-serif' }}
         >
@@ -195,7 +182,7 @@ export function BlogPostPage() {
 
           {/* Article Tag & Metadata */}
           <div className="flex items-center gap-3 mb-4">
-            <span className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: post.color }}>
+            <span data-badge="true" className="px-3 py-1 rounded-full text-xs font-bold text-white" style={{ background: post.color }}>
               {post.tag}
             </span>
             <span className="text-xs text-slate-500 font-semibold">• {post.readTime}</span>
@@ -240,7 +227,7 @@ export function BlogPostPage() {
         </div>
       </div>
       
-      {/* CSS Styles for article body in browser and native print styling */}
+      {/* CSS Styles for article body in browser */}
       <style dangerouslySetInnerHTML={{__html: `
         .prose h2 {
           color: white;
@@ -253,35 +240,6 @@ export function BlogPostPage() {
           line-height: 1.8;
           margin-bottom: 1.5rem;
           font-size: 1.125rem;
-        }
-        .prose-pdf h2 {
-          color: #0f172a !important;
-          font-size: 1.5rem !important;
-          font-weight: 800 !important;
-          margin-top: 1.5rem !important;
-          margin-bottom: 0.75rem !important;
-        }
-        .prose-pdf p {
-          color: #334155 !important;
-          font-size: 14px !important;
-          line-height: 1.7 !important;
-          margin-bottom: 1rem !important;
-        }
-
-        @media print {
-          header, footer, button, a {
-            display: none !important;
-          }
-          body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-          }
-          .prose h2 {
-            color: #000000 !important;
-          }
-          .prose p {
-            color: #333333 !important;
-          }
         }
       `}} />
 

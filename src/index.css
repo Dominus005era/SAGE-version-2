@@ -428,4 +428,44 @@
   font-size: 1.2em;
 }
 
+/* Invariant High-Contrast PDF Export Template (Dark & Light Mode safe) */
+[data-pdf-template],
+[data-pdf-template] * {
+  box-sizing: border-box;
+}
+
+[data-pdf-template] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-pdf-template] h1,
+[data-pdf-template] h2,
+[data-pdf-template] h3,
+[data-pdf-template] h4 {
+  color: #0f172a !important;
+  background-color: transparent !important;
+}
+
+[data-pdf-template] p,
+[data-pdf-template] li,
+[data-pdf-template] div:not([data-badge]) {
+  color: #334155 !important;
+}
+
+[data-pdf-template] .prose-pdf h2 {
+  color: #0f172a !important;
+  font-size: 1.5rem !important;
+  font-weight: 800 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+[data-pdf-template] .prose-pdf p {
+  color: #334155 !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  margin-bottom: 1rem !important;
+}
+
 
