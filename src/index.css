@@ -37,7 +37,10 @@
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
   
-  html { scroll-behavior: smooth; }
+  html, body { 
+    scroll-behavior: smooth; 
+    overscroll-behavior-y: auto;
+  }
   
   body {
     background-color: #04040a;
@@ -46,7 +49,14 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    overflow-y: auto;
     min-height: 100vh;
+  }
+
+  /* Prevent inner scroll containers from trapping mouse wheel scroll events */
+  .scrollbar-thin,
+  [class*="overflow-y-auto"] {
+    overscroll-behavior-y: contain;
   }
 
   ::selection {
