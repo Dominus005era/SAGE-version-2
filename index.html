@@ -3,7 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>SAGE</title>
+    <script>
+      window.addEventListener('error', function(e) {
+        var errDiv = document.createElement('div');
+        errDiv.style.cssText = 'color:#ff4e4e;padding:30px;font-family:monospace;font-size:12px;z-index:999999;position:fixed;inset:0;background:#05050f;overflow:auto;line-height:1.6;';
+        errDiv.innerHTML = '<h3 style="margin-top:0;color:red;">GLOBAL CONTAINER RUNTIME ERROR</h3>' +
+          '<strong>Message:</strong> ' + e.message + '<br/><br/>' +
+          '<strong>Source:</strong> ' + e.filename + ':' + e.lineno + ':' + e.colno + '<br/><br/>' +
+          '<strong>Stack:</strong> <pre style="margin:10px 0 0 0;color:#ccc;">' + (e.error ? e.error.stack : 'No stack available') + '</pre>';
+        document.body.appendChild(errDiv);
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        var errDiv = document.createElement('div');
+        errDiv.style.cssText = 'color:#ff4e4e;padding:30px;font-family:monospace;font-size:12px;z-index:999999;position:fixed;inset:0;background:#05050f;overflow:auto;line-height:1.6;';
+        errDiv.innerHTML = '<h3 style="margin-top:0;color:red;">UNHANDLED PROMISE REJECTION</h3>' +
+          '<strong>Reason:</strong> ' + e.reason + '<br/><br/>' +
+          '<strong>Stack:</strong> <pre style="margin:10px 0 0 0;color:#ccc;">' + (e.reason && e.reason.stack ? e.reason.stack : 'No stack available') + '</pre>';
+        document.body.appendChild(errDiv);
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>

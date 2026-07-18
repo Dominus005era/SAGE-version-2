@@ -1,0 +1,86 @@
+import React from "react";
+import { 
+  Home, Cpu, Settings, LogOut, Sparkles, Layers 
+} from "lucide-react";
+import { UserProfile } from "../../types";
+
+interface SidebarProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  user: UserProfile | null;
+  onLogout: () => void;
+}
+
+export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProps) {
+  
+  const menuItems = [
+    { id: "dashboard", label: "Dashboard", icon: <Home className="w-5 h-5" /> },
+    { id: "cognitive_hub", label: "Cognitive Hub", icon: <Cpu className="w-5 h-5" /> },
+    { id: "artifacts", label: "Artifacts", icon: <Layers className="w-5 h-5" /> },
+    { id: "settings", label: "Settings", icon: <Settings className="w-5 h-5" /> },
+  ];
+
+  return (
+    <aside className="w-72 bg-[#080816]/90 border-r border-white/10 flex flex-col h-screen fixed left-0 top-0 z-30 backdrop-blur-xl">
+      {/* Brand logo */}
+      <a href="/" className="h-20 flex items-center gap-3 px-8 border-b border-white/[0.05] hover:opacity-80 transition-opacity">
+        <div className="w-9 h-9 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-xl flex items-center justify-center border border-white/20 shadow-md">
+          <Sparkles className="w-5 h-5 text-white" />
+        </div>
+        <span className="text-xl font-black tracking-tighter uppercase italic text-white">SAGE</span>
+      </a>
+
+      {/* Navigation list */}
+      <nav className="flex-1 px-4 py-6 overflow-y-auto space-y-1.5 scrollbar-thin">
+        {menuItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-semibold text-sm ${
+                isActive 
+                  ? "bg-white/10 text-white shadow-lg border border-white/[0.08]" 
+                  : "text-[#94a3b8] hover:text-white hover:bg-white/[0.03] border border-transparent"
+              }`}
+            >
+              <span className={isActive ? "text-[#3b82f6]" : "text-[#475569]"}>{item.icon}</span>
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Profile/Footer */}
+      <div className="p-6 border-t border-white/[0.05] bg-black/20 flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          {user?.avatarUrl ? (
+            <img 
+              src={user.avatarUrl} 
+              alt="Avatar" 
+              className="w-12 h-12 rounded-xl object-cover border border-white/20 shadow-md"
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] flex items-center justify-center font-bold text-white shadow-md border border-white/20">
+              {user?.username ? user.username.substring(0, 2).toUpperCase() : "SG"}
+            </div>
+          )}
+          <div className="overflow-hidden">
+            <h4 className="font-bold text-white text-sm truncate">{user?.username || "Operative"}</h4>
+            <p className="text-[10px] text-[#3b82f6] font-bold uppercase tracking-wider truncate">
+              {user?.sageLevel || "Novice Sage"}
+            </p>
+          </div>
+        </div>
+
+        <button 
+          onClick={onLogout}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all font-bold text-xs"
+        >
+          <LogOut className="w-4 h-4" />
+          Terminate Session
+        </button>
+      </div>
+    </aside>
+  );
+}

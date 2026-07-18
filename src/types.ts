@@ -1,4 +1,4 @@
-export type Category = 'space' | 'science' | 'nature' | 'brain';
+export type Category = 'space' | 'science' | 'nature' | 'brain' | string;
 
 export interface UserProfile {
   userId: string;
@@ -9,9 +9,13 @@ export interface UserProfile {
   streak: number;
   lastLoginDate: string;
   masteryScore: number;
-  categoryProgress: Record<Category, number>;
+  categoryProgress: Record<string, number>;
+  bio?: string;
+  primaryFocus?: string;
+  dailyGoal?: number;
   settings: {
     theme: 'light' | 'dark';
+    fontSize?: 'sm' | 'base' | 'lg' | 'xlarge';
     appLanguage: string;
     responseLanguage: string;
   };
@@ -19,7 +23,7 @@ export interface UserProfile {
 
 export interface KnowledgeItem {
   id: string;
-  type: 'fact' | 'quiz';
+  type: 'fact' | 'quiz' | 'myth' | 'story' | 'case_study' | 'scenario' | 'logic' | 'discussion' | string;
   category: Category;
   title: string;
   content: string;
@@ -27,6 +31,10 @@ export interface KnowledgeItem {
   correctOptionIndex?: number;
   explanation: string;
   createdAt: string;
+  imageUrl?: string;
+  isLearnMode?: boolean;
+  mythText?: string;
+  truthText?: string;
 }
 
 export interface UserKnowledgeMapping {
