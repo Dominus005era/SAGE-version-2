@@ -285,92 +285,51 @@ function PlatformAppContent() {
     }
   };
 
-  // Login handler
+  // Login handler - Pure Firebase Authentication
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
-    if (!authEmail) {
+    if (!authEmail.trim()) {
       setAuthError("Email address is required.");
       return;
     }
+    if (!authPass.trim()) {
+      setAuthError("Password is required.");
+      return;
+    }
 
-    if (authMethod === 'sandbox') {
-      // Bypasses Firebase Auth - Sandbox Mode
-      const mockUser = {
-        uid: "mock-uid-" + Date.now(),
-        email: authEmail,
-        displayName: authName || authEmail.split("@")[0]
-      };
-
-      const mockProfile: UserProfile = {
-        userId: mockUser.uid,
-        username: mockUser.displayName,
-        avatarUrl: null,
-        sageLevel: "Initiate Sage",
-        xp: 1500,
-        streak: 3,
-        lastLoginDate: new Date().toISOString(),
-        masteryScore: 18,
-        categoryProgress: { space: 20, science: 15, nature: 30, brain: 40 },
-        settings: { theme: 'dark', appLanguage: 'en', responseLanguage: 'english' }
-      };
-
-      setUser(mockUser);
-      setProfile(mockProfile);
-      localStorage.setItem("sage_mock_profile", JSON.stringify(mockProfile));
-      setInitDone(false);
-    } else {
-      // Connects to Real Firebase Auth
-      try {
-        setLoading(true);
-        if (authMode === 'register') {
-          if (!authName) throw new Error("Name is required for registry entry");
-          await registerEmail(authEmail, authPass, authName);
-        } else {
-          await loginEmail(authEmail, authPass);
-        }
-        setInitDone(false);
-      } catch (err: any) {
-        setAuthError(err.message || "Firebase sync authenticated failed.");
-        setLoading(false);
+    try {
+      setLoading(true);
+      if (authMode === 'register') {
+        if (!authName.trim()) throw new Error("Full Name is required for registration");
+        await registerEmail(authEmail.trim(), authPass, authName.trim());
+      } else {
+        await loginEmail(authEmail.trim(), authPass);
       }
+      setInitDone(false);
+    } catch (err: any) {
+      const code = err?.code || '';
+      let msg = err?.message || "Firebase Authentication failed.";
+      if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
+        msg = "Invalid email or password.";
+      } else if (code.includes('email-already-in-use')) {
+        msg = "An account with this email address already exists.";
+      } else if (code.includes('weak-password')) {
+        msg = "Password should be at least 6 characters long.";
+      }
+      setAuthError(msg);
+      setLoading(false);
     }
   };
 
   const handleGoogleSyncClick = async () => {
-    if (authMethod === 'sandbox') {
-      const mockUser = {
-        uid: "mock-google-" + Date.now(),
-        email: "nexus_operative@gmail.com",
-        displayName: "Nexus Operative"
-      };
-
-      const mockProfile: UserProfile = {
-        userId: mockUser.uid,
-        username: mockUser.displayName,
-        avatarUrl: null,
-        sageLevel: "Universal Sage",
-        xp: 8400,
-        streak: 8,
-        lastLoginDate: new Date().toISOString(),
-        masteryScore: 142,
-        categoryProgress: { space: 65, science: 50, nature: 70, brain: 85 },
-        settings: { theme: 'dark', appLanguage: 'en', responseLanguage: 'english' }
-      };
-
-      setUser(mockUser);
-      setProfile(mockProfile);
-      localStorage.setItem("sage_mock_profile", JSON.stringify(mockProfile));
+    try {
+      setLoading(true);
+      await signInWithGoogle();
       setInitDone(false);
-    } else {
-      try {
-        setLoading(true);
-        await signInWithGoogle();
-        setInitDone(false);
-      } catch (err: any) {
-        setAuthError(err.message || "Google Authentication failed.");
-        setLoading(false);
-      }
+    } catch (err: any) {
+      setAuthError(err.message || "Google Authentication failed.");
+      setLoading(false);
     }
   };
 
@@ -654,32 +613,12 @@ function PlatformAppContent() {
           className="max-w-md w-full relative z-10 p-10 bg-[#080816]/60 backdrop-blur-[40px] border border-white/10 rounded-[40px] shadow-2xl"
         >
           {/* SAGE Brand Emblem */}
-          <div className="w-20 h-20 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-[24px] mx-auto flex items-center justify-center shadow-[0_10px_40px_rgba(139,92,246,0.3)] mb-6 border border-white/20">
-            <Sparkles className="w-10 h-10 text-white" />
+          <div className="w-20 h-20 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-[24px] mx-auto flex items-center justify-center shadow-[0_10px_40px_rgba(139,92,246,0.3)] mb-6 border border-white/20 overflow-hidden">
+            <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
           </div>
           
           <h1 className="text-4xl font-black tracking-tighter mb-1 uppercase italic text-white">SAGE</h1>
-          <p className="text-[#94a3b8] mb-6 font-light text-xs tracking-[2px] uppercase">Scenario Applied General Education</p>
-
-          {/* Tab Selector: Offline Sandbox Mode vs Production Firebase Sync */}
-          <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 mb-8 max-w-sm mx-auto">
-            <button
-              onClick={() => { setAuthMethod('sandbox'); setAuthError(""); }}
-              className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all ${
-                authMethod === 'sandbox' ? "bg-white/10 text-white shadow-md" : "text-[#475569] hover:text-[#94a3b8]"
-              }`}
-            >
-              Sandbox (Offline)
-            </button>
-            <button
-              onClick={() => { setAuthMethod('firebase'); setAuthError(""); }}
-              className={`flex-1 py-2 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all ${
-                authMethod === 'firebase' ? "bg-white/10 text-white shadow-md" : "text-[#475569] hover:text-[#94a3b8]"
-              }`}
-            >
-              Firebase (Cloud)
-            </button>
-          </div>
+          <p className="text-[#94a3b8] mb-8 font-light text-xs tracking-[2px] uppercase">Scenario Applied General Education</p>
 
           <form onSubmit={handleAuthSubmit} className="space-y-4 mb-8">
             {authMode === 'register' && (
@@ -700,7 +639,7 @@ function PlatformAppContent() {
             />
             <input 
               type="password" 
-              placeholder={authMethod === 'sandbox' ? "Security Code (Optional)" : "Account Password"}
+              placeholder="Account Password"
               className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-[#8b5cf6] text-white placeholder-zinc-500 transition-colors"
               value={authPass}
               onChange={(e) => setAuthPass(e.target.value)}
@@ -712,10 +651,7 @@ function PlatformAppContent() {
               className="w-full py-5 bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
               <Zap className="w-5 h-5" />
-              {authMethod === 'sandbox' 
-                ? 'Initiate Sandbox Session' 
-                : authMode === 'login' ? 'Firebase Cloud Access' : 'Create Cloud Profile'
-              }
+              {authMode === 'login' ? 'Firebase Cloud Access' : 'Create Cloud Profile'}
             </button>
           </form>
 
@@ -730,20 +666,18 @@ function PlatformAppContent() {
             className="w-full py-4 bg-white text-black rounded-2xl font-bold flex items-center justify-center gap-3 hover:translate-y-[-2px] transition-all shadow-md active:scale-[0.98]"
           >
             <Globe2 className="w-5 h-5 text-[#3b82f6]" />
-            {authMethod === 'sandbox' ? "Simulate Google Login" : "Google Cloud Sync"}
+            Google Cloud Sync
           </button>
 
-          {authMethod === 'firebase' && (
-            <p className="mt-8 text-xs text-white/40">
-              {authMode === 'login' ? "New operative?" : "Existing sage?"}
-              <button 
-                onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                className="ml-2 text-[#3b82f6] font-bold hover:underline"
-              >
-                {authMode === 'login' ? 'Create Cloud Profile' : 'Access Cloud Vault'}
-              </button>
-            </p>
-          )}
+          <p className="mt-8 text-xs text-white/40">
+            {authMode === 'login' ? "New operative?" : "Existing sage?"}
+            <button 
+              onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
+              className="ml-2 text-[#3b82f6] font-bold hover:underline"
+            >
+              {authMode === 'login' ? 'Create Cloud Profile' : 'Access Cloud Vault'}
+            </button>
+          </p>
         </motion.div>
       </div>
     );
