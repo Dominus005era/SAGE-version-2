@@ -199,7 +199,9 @@ export function SettingsPanel({
               <div>
                 <h4 className="font-bold text-lg text-white">{editedName || "Guest Operative"}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  <Shield className="w-3.5 h-3.5 text-[#3b82f6]" />
+                  <div className="w-4 h-4 rounded-full overflow-hidden border border-white/20 bg-[#04040a] flex items-center justify-center shrink-0">
+                    <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
+                  </div>
                   <span className="text-xs text-[#3b82f6] font-bold uppercase tracking-wider">
                     {user?.sageLevel || "Universal Sage"} • Active Operative
                   </span>

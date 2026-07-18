@@ -24,8 +24,8 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
     <aside className="w-72 bg-[#080816]/90 border-r border-white/10 flex flex-col h-screen fixed left-0 top-0 z-30 backdrop-blur-xl">
       {/* Brand logo */}
       <a href="/" className="h-20 flex items-center gap-3 px-8 border-b border-white/[0.05] hover:opacity-80 transition-opacity">
-        <div className="w-9 h-9 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-xl flex items-center justify-center border border-white/20 shadow-md">
-          <Sparkles className="w-5 h-5 text-white" />
+        <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/20 shadow-md bg-[#04040a] flex items-center justify-center">
+          <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
         </div>
         <span className="text-xl font-black tracking-tighter uppercase italic text-white">SAGE</span>
       </a>
@@ -67,9 +67,12 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
           )}
           <div className="overflow-hidden">
             <h4 className="font-bold text-white text-sm truncate">{user?.username || "Operative"}</h4>
-            <p className="text-[10px] text-[#3b82f6] font-bold uppercase tracking-wider truncate">
-              {user?.sageLevel || "Novice Sage"}
-            </p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <img src="/sage-logo.png" alt="SAGE Logo" className="w-3.5 h-3.5 object-cover rounded-full border border-white/20 shrink-0" />
+              <p className="text-[10px] text-[#3b82f6] font-bold uppercase tracking-wider truncate">
+                {user?.sageLevel || "Novice Sage"}
+              </p>
+            </div>
           </div>
         </div>
 
