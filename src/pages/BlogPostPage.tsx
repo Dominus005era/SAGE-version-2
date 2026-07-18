@@ -246,10 +246,27 @@ export function BlogPostPage() {
           margin-bottom: 1rem;
         }
         .prose p {
+          color: #d1d5db;
           line-height: 1.8;
           margin-bottom: 1.5rem;
           font-size: 1.125rem;
         }
+
+        /* Pristine high-contrast text rules when viewing blog post in Light Mode */
+        .light-mode .prose h1,
+        .light-mode .prose h2,
+        .light-mode .prose h3,
+        .light-mode .prose h4 {
+          color: #0f172a !important;
+        }
+        .light-mode .prose p,
+        .light-mode .prose span,
+        .light-mode .prose div,
+        .light-mode .prose li,
+        .light-mode .prose-invert p {
+          color: #334155 !important;
+        }
+
         .prose-pdf h2 {
           color: #0f172a !important;
           font-size: 1.5rem !important;

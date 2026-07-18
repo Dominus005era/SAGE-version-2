@@ -346,7 +346,11 @@
 .light-mode .text-zinc-200,
 .light-mode .text-zinc-300,
 .light-mode .text-\[\#94a3b8\],
-.light-mode .text-\[\#cbd5e1\] {
+.light-mode .text-\[\#cbd5e1\],
+.light-mode .text-\[\#d1d5db\],
+.light-mode .prose p,
+.light-mode .prose span,
+.light-mode .prose-invert p {
   color: #334155 !important;
 }
 
