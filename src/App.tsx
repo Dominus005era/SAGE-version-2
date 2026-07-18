@@ -8,6 +8,7 @@ import { FeaturesPage } from "./pages/FeaturesPage";
 import { CommunityPage } from "./pages/CommunityPage";
 import { BlogPage } from "./pages/BlogPage";
 import { BlogPostPage } from "./pages/BlogPostPage";
+import { AuthPage } from "./pages/AuthPage";
 
 export default function App() {
   return (
@@ -20,6 +21,9 @@ export default function App() {
       <Route path="/community" element={<CommunityPage />} />
       <Route path="/blog" element={<BlogPage />} />
       <Route path="/blog/:id" element={<BlogPostPage />} />
+      
+      <Route path="/login" element={<AuthPage initialMode="login" />} />
+      <Route path="/register" element={<AuthPage initialMode="register" />} />
       
       <Route path="/app/*" element={<PlatformApp />} />
     </Routes>

@@ -72,7 +72,7 @@ function PlatformAppContent() {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
 
   // Auth Method Toggle: 'sandbox' (mock login) vs 'firebase' (real Firebase login)
-  const [authMethod, setAuthMethod] = useState<'sandbox' | 'firebase'>('sandbox');
+  const [authMethod, setAuthMethod] = useState<'sandbox' | 'firebase'>('firebase');
 
   // Learning Generator states
   const [currentItem, setCurrentItem] = useState<KnowledgeItem | null>(null);
