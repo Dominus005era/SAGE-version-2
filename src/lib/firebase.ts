@@ -9,7 +9,15 @@ import {
   signOut
 } from "firebase/auth";
 import { getFirestore, doc, getDocFromServer } from "firebase/firestore";
-import firebaseConfig from "../../firebase-applet-config.json";
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCfLvwifdbkWZq38EnU7-QJ93oBqHdJvdE",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "sage-f2d25.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "sage-f2d25",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "sage-f2d25.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "922109935172",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:922109935172:web:ce6e82e0122779e9e48611",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-G5C3K2Y547"
+};
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
