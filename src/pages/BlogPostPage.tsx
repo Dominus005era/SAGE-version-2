@@ -7,7 +7,6 @@ import { ArrowLeft, Clock, Calendar, Download, Loader2 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
 // Helper to convert remote images into Base64 using fetch + FileReader
-// This eliminates canvas tainting completely because only data: URLs are rendered into html2canvas
 const fetchImageAsBase64 = async (url: string): Promise<string> => {
   try {
     const res = await fetch(url, { mode: 'cors' });
@@ -28,7 +27,6 @@ export function BlogPostPage() {
   const { id } = useParams();
   const post = BLOG_POSTS.find(p => p.id === id);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [base64Image, setBase64Image] = useState<string>('');
 
@@ -42,11 +40,11 @@ export function BlogPostPage() {
   }
 
   const handleDownloadPDF = async () => {
-    if (!pdfTemplateRef.current || !containerRef.current) return;
+    if (!pdfTemplateRef.current) return;
     setIsExporting(true);
 
     try {
-      // 1. Preload image as Base64 data URL
+      // 1. Preload image as Base64 data URL to prevent canvas tainting
       let imgData = base64Image;
       if (!imgData && post.image) {
         imgData = await fetchImageAsBase64(post.image);
@@ -57,20 +55,11 @@ export function BlogPostPage() {
       const pdfWorker = typeof html2pdf === 'function' ? html2pdf : (html2pdf as any).default || (window as any).html2pdf;
 
       if (!pdfWorker) {
-        window.print();
+        console.error("PDF Worker unavailable.");
         return;
       }
 
       const element = pdfTemplateRef.current;
-      const container = containerRef.current;
-
-      // 3. Temporarily bring container into visible viewport flow for 100% accurate html2canvas capture
-      container.style.position = 'fixed';
-      container.style.top = '0';
-      container.style.left = '0';
-      container.style.zIndex = '99999';
-      container.style.opacity = '1';
-      container.style.backgroundColor = '#ffffff';
 
       const opt = {
         margin: [0.4, 0.4, 0.4, 0.4],
@@ -78,31 +67,20 @@ export function BlogPostPage() {
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
           scale: 2, 
-          useCORS: false, 
-          allowTaint: false,
+          useCORS: true, 
+          allowTaint: true,
           backgroundColor: '#ffffff',
-          logging: false,
-          scrollY: 0,
-          scrollX: 0
+          logging: false
         },
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         pagebreak: { mode: ['avoid-all', 'css'] }
       };
 
-      // 4. Generate & Save PDF
+      // 3. Generate & Save PDF directly without window.print or DOM overlay mutations
       await pdfWorker().set(opt).from(element).save();
     } catch (err) {
-      console.error("PDF Generation fallback trigger:", err);
-      window.print();
+      console.error("PDF Generation error:", err);
     } finally {
-      // 5. Restore hidden off-screen state
-      if (containerRef.current) {
-        containerRef.current.style.position = 'fixed';
-        containerRef.current.style.left = '-9999px';
-        containerRef.current.style.top = '0';
-        containerRef.current.style.zIndex = '-9999';
-        containerRef.current.style.opacity = '0';
-      }
       setIsExporting(false);
     }
   };
@@ -165,17 +143,15 @@ export function BlogPostPage() {
       </div>
 
       {/* ========================================================================= */}
-      {/* PUBLICATION-GRADE PDF TEMPLATE (Always Pure White Background & Dark Text) */}
+      {/* PUBLICATION-GRADE PDF TEMPLATE (Completely Isolated & Off-screen) */}
       {/* ========================================================================= */}
       <div 
-        ref={containerRef}
         style={{ 
-          position: 'fixed', 
+          position: 'absolute', 
           left: '-9999px', 
           top: '0', 
           width: '800px', 
-          zIndex: -9999, 
-          opacity: 0,
+          pointerEvents: 'none',
           backgroundColor: '#ffffff',
           color: '#0f172a'
         }}
@@ -272,22 +248,6 @@ export function BlogPostPage() {
           line-height: 1.8;
           margin-bottom: 1.5rem;
           font-size: 1.125rem;
-        }
-
-        @media print {
-          header, footer, button, a {
-            display: none !important;
-          }
-          body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-          }
-          .prose h2 {
-            color: #000000 !important;
-          }
-          .prose p {
-            color: #333333 !important;
-          }
         }
       `}} />
 
