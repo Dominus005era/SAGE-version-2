@@ -1,21 +1,47 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { auth, signInWithGoogle } from '../lib/firebase';
+import { 
+  auth, 
+  loginEmail, 
+  registerEmail, 
+  signInWithGoogle 
+} from '../lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { 
-  Sparkles, ShieldCheck, Loader2, AlertCircle, CheckCircle2, Lock 
+  Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, 
+  ShieldCheck, Loader2, AlertCircle, CheckCircle2 
 } from 'lucide-react';
 
-export function AuthPage() {
+interface AuthPageProps {
+  initialMode?: 'login' | 'register';
+}
+
+export function AuthPage({ initialMode }: AuthPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Mode state: 'login' vs 'register'
+  const [mode, setMode] = useState<'login' | 'register'>(() => {
+    if (initialMode) return initialMode;
+    return location.pathname === '/register' ? 'register' : 'login';
+  });
+
+  // Form states
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  
+  // Loading & notification states
+  const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Auto-redirect if already authenticated
+  // Auto-redirect to platform if authenticated
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -25,18 +51,67 @@ export function AuthPage() {
     return () => unsubscribe();
   }, [navigate]);
 
-  // Format Firebase error codes into clear user messages
+  // Format Firebase error codes into friendly messages
   const getFriendlyErrorMessage = (code: string, message: string): string => {
+    if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
+      return 'Invalid email or password. Please check your credentials.';
+    }
+    if (code.includes('email-already-in-use')) {
+      return 'An account with this email address already exists. Try logging in.';
+    }
+    if (code.includes('weak-password')) {
+      return 'Password should be at least 6 characters long.';
+    }
+    if (code.includes('invalid-email')) {
+      return 'Please enter a valid email address.';
+    }
     if (code.includes('popup-closed-by-user')) {
-      return 'Google sign-in was cancelled. Click below to try again.';
+      return 'Google sign-in was cancelled.';
     }
-    if (code.includes('popup-blocked')) {
-      return 'Sign-in popup was blocked by your browser. Please allow popups for SAGE.';
-    }
-    return message || 'Google Authentication failed. Please try again.';
+    return message || 'Authentication failed. Please try again.';
   };
 
-  // One-Click Google Authentication Handler
+  // Handle Email & Password Submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Please enter both email and password.');
+      return;
+    }
+
+    if (mode === 'register' && !name.trim()) {
+      setErrorMessage('Full Name is required for registration.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (mode === 'register') {
+        await registerEmail(email.trim(), password, name.trim());
+        setSuccessMessage('Account created successfully! Redirecting to SAGE Portal...');
+      } else {
+        await loginEmail(email.trim(), password);
+        setSuccessMessage('Authenticated successfully! Redirecting to SAGE Portal...');
+      }
+      setTimeout(() => navigate('/app'), 800);
+    } catch (err: any) {
+      console.error("Firebase Auth Error:", err);
+      setErrorMessage(getFriendlyErrorMessage(err?.code || '', err?.message || ''));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Google Sign In
   const handleGoogleAuth = async () => {
     setErrorMessage('');
     setSuccessMessage('');
@@ -44,7 +119,7 @@ export function AuthPage() {
 
     try {
       await signInWithGoogle();
-      setSuccessMessage('Google Account verified! Redirecting to SAGE Portal...');
+      setSuccessMessage('Google Authentication verified! Entering SAGE Portal...');
       setTimeout(() => navigate('/app'), 800);
     } catch (err: any) {
       console.error("Google Auth Error:", err);
@@ -68,35 +143,68 @@ export function AuthPage() {
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="w-full max-w-md bg-[#080816]/80 border border-white/[0.08] rounded-3xl p-8 md:p-10 shadow-2xl backdrop-blur-2xl relative overflow-hidden text-center"
+          className="w-full max-w-md bg-[#080816]/80 border border-white/[0.08] rounded-3xl p-8 md:p-10 shadow-2xl backdrop-blur-2xl relative overflow-hidden"
         >
           {/* Top SAGE Logo Emblem */}
-          <div className="w-20 h-20 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-[24px] mx-auto flex items-center justify-center shadow-[0_10px_40px_rgba(59,130,246,0.3)] mb-6 border border-white/20 overflow-hidden">
-            <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#3b82f6] to-[#8b5cf6] rounded-2xl flex items-center justify-center shadow-lg border border-white/20 overflow-hidden">
+              <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
+            </div>
           </div>
 
-          {/* Decorative Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-[11px] font-bold uppercase tracking-[2px] text-[#3b82f6] mb-4">
-            <Sparkles className="w-3.5 h-3.5 text-[#3b82f6]" />
-            SAGE Cloud Authentication
+          {/* Title Header */}
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-black tracking-tight text-white mb-2 italic uppercase">
+              {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+            </h1>
+            <p className="text-xs text-[#94a3b8] font-medium leading-relaxed">
+              {mode === 'login' 
+                ? 'Sign in with your email & password or Google to enter SAGE' 
+                : 'Register your operative account to access SAGE Portal'}
+            </p>
           </div>
 
-          {/* Title & Subtitle */}
-          <h1 className="text-3xl font-black tracking-tight text-white mb-2 italic uppercase">
-            Access SAGE Portal
-          </h1>
-          <p className="text-xs text-[#94a3b8] font-medium leading-relaxed mb-8 max-w-xs mx-auto">
-            One-click secure sign-in with your Google account to sync cognitive stats, routines, and AI learning progress.
-          </p>
+          {/* Mode Switcher Tabs */}
+          <div className="grid grid-cols-2 p-1 bg-black/40 border border-white/[0.06] rounded-2xl mb-6">
+            <button
+              onClick={() => {
+                setMode('login');
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+              className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+                mode === 'login'
+                  ? 'bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white shadow-md'
+                  : 'text-[#94a3b8] hover:text-white'
+              }`}
+            >
+              Sign In
+            </button>
 
-          {/* Error & Success Alert Boxes */}
+            <button
+              onClick={() => {
+                setMode('register');
+                setErrorMessage('');
+                setSuccessMessage('');
+              }}
+              className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+                mode === 'register'
+                  ? 'bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white shadow-md'
+                  : 'text-[#94a3b8] hover:text-white'
+              }`}
+            >
+              Register
+            </button>
+          </div>
+
+          {/* Alert Banners */}
           <AnimatePresence>
             {errorMessage && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold flex items-start gap-2.5 text-left"
+                className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold flex items-start gap-2.5"
               >
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
@@ -108,7 +216,7 @@ export function AuthPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-start gap-2.5 text-left"
+                className="mb-6 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-start gap-2.5"
               >
                 <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{successMessage}</span>
@@ -116,17 +224,106 @@ export function AuthPage() {
             )}
           </AnimatePresence>
 
-          {/* Single Google Authentication Button */}
+          {/* Form for Email & Password */}
+          <form onSubmit={handleSubmit} className="space-y-4 mb-6">
+            {/* Full Name (Register Mode Only) */}
+            {mode === 'register' && (
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-[2px] text-[#475569] block">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Alex Mercer"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-semibold text-white placeholder-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Email Field */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-[2px] text-[#475569] block">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type="email"
+                  required
+                  placeholder="operative@sage.net"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white/[0.03] border border-white/10 rounded-2xl pl-11 pr-4 py-3.5 text-xs font-semibold text-white placeholder-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold uppercase tracking-[2px] text-[#475569] block">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-[#475569] absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-white/[0.03] border border-white/10 rounded-2xl pl-11 pr-12 py-3.5 text-xs font-semibold text-white placeholder-[#475569] focus:outline-none focus:border-[#3b82f6] transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[#475569] hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Email/Password Action Button */}
+            <button
+              type="submit"
+              disabled={loading || googleLoading}
+              className="w-full mt-2 py-4 px-6 bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl disabled:opacity-50"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <>
+                  {mode === 'login' ? 'Sign In with Email' : 'Create Account'}
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="h-px bg-white/10 flex-1" />
+            <span className="text-[10px] font-bold text-[#475569] uppercase tracking-widest">or sign in with</span>
+            <div className="h-px bg-white/10 flex-1" />
+          </div>
+
+          {/* Google Sign In Button */}
           <button
             type="button"
             onClick={handleGoogleAuth}
-            disabled={googleLoading}
-            className="w-full py-4 px-6 bg-white hover:bg-zinc-100 text-slate-900 rounded-2xl text-sm font-extrabold flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-xl border border-white/20"
+            disabled={googleLoading || loading}
+            className="w-full py-3.5 px-4 bg-white hover:bg-zinc-100 text-slate-900 rounded-2xl text-xs font-bold flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-lg border border-white/20"
           >
             {googleLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin text-slate-900" />
+              <Loader2 className="w-4 h-4 animate-spin text-slate-900" />
             ) : (
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
@@ -151,7 +348,7 @@ export function AuthPage() {
           {/* Footer Security Badge */}
           <div className="mt-8 pt-6 border-t border-white/[0.06] flex items-center justify-center gap-2 text-[11px] font-bold text-[#475569]">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            Protected by Firebase Encrypted Authentication
+            256-bit Firebase Encrypted Connection
           </div>
         </motion.div>
       </div>

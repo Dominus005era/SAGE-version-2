@@ -620,12 +620,59 @@ function PlatformAppContent() {
           <h1 className="text-4xl font-black tracking-tighter mb-1 uppercase italic text-white">SAGE</h1>
           <p className="text-[#94a3b8] mb-8 font-light text-xs tracking-[2px] uppercase">Scenario Applied General Education</p>
 
-          {/* Single Google Authentication Button */}
+          {/* Email & Password Form */}
+          <form onSubmit={handleAuthSubmit} className="space-y-4 mb-6 text-left">
+            {authMode === 'register' && (
+              <input 
+                type="text" 
+                placeholder="Full Name" 
+                required
+                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-xs focus:outline-none focus:border-[#8b5cf6] text-white placeholder-[#475569] transition-colors font-semibold"
+                value={authName}
+                onChange={(e) => setAuthName(e.target.value)}
+              />
+            )}
+            <input 
+              type="email" 
+              placeholder="Email Address" 
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-xs focus:outline-none focus:border-[#3b82f6] text-white placeholder-[#475569] transition-colors font-semibold"
+              value={authEmail}
+              onChange={(e) => setAuthEmail(e.target.value)}
+            />
+            <input 
+              type="password" 
+              placeholder="Account Password"
+              required
+              className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-3.5 text-xs focus:outline-none focus:border-[#8b5cf6] text-white placeholder-[#475569] transition-colors font-semibold"
+              value={authPass}
+              onChange={(e) => setAuthPass(e.target.value)}
+            />
+            {authError && <p className="text-red-400 text-xs font-semibold">{authError}</p>}
+            
+            <button 
+              type="submit"
+              className="w-full py-4 bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <Zap className="w-4 h-4" />
+              {authMode === 'login' ? 'Sign In with Email' : 'Create Account'}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative flex items-center gap-4 mb-6">
+            <div className="flex-1 h-px bg-white/10" />
+            <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">or sign in with</span>
+            <div className="flex-1 h-px bg-white/10" />
+          </div>
+
+          {/* Google Authentication Button */}
           <button 
+            type="button"
             onClick={handleGoogleSyncClick}
-            className="w-full py-4 bg-white text-slate-900 rounded-2xl font-extrabold text-sm flex items-center justify-center gap-3 hover:bg-zinc-100 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl border border-white/20"
+            className="w-full py-3.5 bg-white text-slate-900 rounded-2xl font-bold text-xs flex items-center justify-center gap-3 hover:bg-zinc-100 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl border border-white/20"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
                 d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
@@ -646,10 +693,19 @@ function PlatformAppContent() {
             Sign in with Google
           </button>
 
-          {authError && <p className="mt-4 text-red-400 text-xs font-semibold">{authError}</p>}
-
-          <p className="mt-8 text-[11px] font-semibold text-white/40">
-            Authenticated via Firebase Google Encryption
+          {/* Mode Switcher */}
+          <p className="mt-6 text-xs text-white/40 font-semibold">
+            {authMode === 'login' ? "New operative?" : "Already registered?"}
+            <button 
+              type="button"
+              onClick={() => {
+                setAuthMode(authMode === 'login' ? 'register' : 'login');
+                setAuthError("");
+              }}
+              className="ml-2 text-[#3b82f6] font-bold hover:underline"
+            >
+              {authMode === 'login' ? 'Create Account' : 'Sign In'}
+            </button>
           </p>
         </motion.div>
       </div>
