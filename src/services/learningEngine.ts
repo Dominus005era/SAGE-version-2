@@ -122,7 +122,7 @@ Generate an interactive educational card. Provide a title, 5-6 detailed sentence
   try {
     const aiInstance = new GoogleGenAI({ apiKey: currentKey });
     const response = await aiInstance.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
