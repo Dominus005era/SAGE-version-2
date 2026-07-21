@@ -99,9 +99,9 @@ export function SettingsPanel({
   };
 
   return (
-    <div className="max-w-5xl w-full mx-auto bg-[#080816]/40 border border-white/[0.08] rounded-3xl overflow-hidden flex min-h-[580px] shadow-2xl backdrop-blur-xl">
+    <div className="max-w-5xl w-full mx-auto bg-[#080816]/40 border border-white/[0.08] rounded-3xl overflow-hidden flex flex-col md:flex-row min-h-[580px] shadow-2xl backdrop-blur-xl">
       {/* Left split mini-panel */}
-      <div className="w-1/3 border-r border-white/[0.08] bg-black/10 p-6 space-y-2">
+      <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-white/[0.08] bg-black/10 p-4 md:p-6 space-y-2">
         <h3 className="text-xs font-bold uppercase tracking-[2px] text-[#475569] mb-6 px-4">Configurations</h3>
         
         <button
@@ -142,12 +142,12 @@ export function SettingsPanel({
       </div>
 
       {/* Right details panel */}
-      <div className="w-2/3 p-8 flex flex-col relative bg-black/5 overflow-y-auto">
+      <div className="w-full md:w-2/3 p-4 md:p-8 flex flex-col relative bg-black/5 overflow-y-auto">
         
         {/* PROFILE SETTINGS DETAIL PANEL */}
         {activeSubTab === "profile" && (
           <div className="flex-1 flex flex-col space-y-6">
-            <div className="flex justify-between items-center pb-4 border-b border-white/[0.05]">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-white/[0.05]">
               <div>
                 <h2 className="text-2xl font-black tracking-tight text-white uppercase italic">Operative Profile</h2>
                 <p className="text-xs text-[#94a3b8] font-semibold">Customize your identity, primary domain, and daily targets</p>
@@ -170,7 +170,7 @@ export function SettingsPanel({
             </div>
 
             {/* Avatar section */}
-            <div className="flex items-center gap-6 pb-6 border-b border-white/[0.05]">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pb-6 border-b border-white/[0.05]">
               <div className="relative group">
                 {editedAvatar ? (
                   <img 
