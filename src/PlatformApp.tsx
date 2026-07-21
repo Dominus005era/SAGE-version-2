@@ -15,7 +15,7 @@ import { LandingPage } from "./components/LandingPage";
 import { 
   Loader2, Sparkles, Globe2, Rocket, Brain, Zap, ArrowLeft, 
   ShieldAlert, Award, BookOpen, Lightbulb, PenTool, LayoutTemplate, 
-  Activity, MessageSquare, Layers, Shuffle, Globe, Sun, Moon, Menu
+  Activity, MessageSquare, Layers, Shuffle, Globe, Sun, Moon, Menu, Settings
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
