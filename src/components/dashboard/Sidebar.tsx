@@ -1,6 +1,6 @@
 import React from "react";
 import { 
-  Home, Cpu, Settings, LogOut, Sparkles, Layers 
+  Home, Cpu, Settings, LogOut, Sparkles, Layers, X
 } from "lucide-react";
 import { UserProfile } from "../../types";
 
@@ -9,9 +9,11 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   user: UserProfile | null;
   onLogout: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, user, onLogout, isOpen, onClose }: SidebarProps) {
   
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: <Home className="w-5 h-5" /> },
@@ -21,14 +23,31 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
   ];
 
   return (
-    <aside className="sidebar-container w-72 bg-[#080816]/90 border-r border-white/10 flex flex-col h-screen fixed left-0 top-0 z-30 backdrop-blur-xl">
-      {/* Brand logo */}
-      <a href="/" className="sidebar-header h-20 flex items-center gap-3 px-8 border-b border-white/[0.05] hover:opacity-80 transition-opacity">
-        <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/20 shadow-md bg-[#04040a] flex items-center justify-center">
-          <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
+    <>
+      {/* Mobile Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={onClose}
+        />
+      )}
+      <aside 
+        className={`sidebar-container w-72 bg-[#080816]/90 border-r border-white/10 flex flex-col h-screen fixed left-0 top-0 z-50 backdrop-blur-xl transform transition-transform duration-300 ${
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        {/* Brand logo */}
+        <div className="sidebar-header h-20 flex items-center justify-between px-8 border-b border-white/[0.05]">
+          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/20 shadow-md bg-[#04040a] flex items-center justify-center">
+              <img src="/sage-logo.png" alt="SAGE Logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="sidebar-brand-text text-xl font-black tracking-tighter uppercase italic text-white">SAGE</span>
+          </a>
+          <button className="lg:hidden p-2 text-white/50 hover:text-white" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <span className="sidebar-brand-text text-xl font-black tracking-tighter uppercase italic text-white">SAGE</span>
-      </a>
 
       {/* Navigation list */}
       <nav className="flex-1 px-4 py-6 overflow-y-auto space-y-1.5 scrollbar-thin">
@@ -85,5 +104,6 @@ export function Sidebar({ activeTab, setActiveTab, user, onLogout }: SidebarProp
         </button>
       </div>
     </aside>
+    </>
   );
 }

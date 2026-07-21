@@ -275,8 +275,7 @@ export function DashboardView({ stats, routine, setRoutine, onNavigateToTab }: D
               <motion.div
                 key={key}
                 whileHover={{ y: -4 }}
-                onClick={() => onNavigateToTab(key)}
-                className="p-6 rounded-[24px] border border-white/[0.06] bg-[#080816]/30 hover:bg-[#080816]/50 cursor-pointer transition-all flex flex-col justify-between h-40 group relative overflow-hidden"
+                className="p-6 rounded-[24px] border border-white/[0.06] bg-[#080816]/30 hover:bg-[#080816]/50 transition-all flex flex-col justify-between h-40 group relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 w-24 h-24 bg-white/[0.01] rounded-full blur-2xl group-hover:bg-white/[0.03]" />
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${config.color}`}>

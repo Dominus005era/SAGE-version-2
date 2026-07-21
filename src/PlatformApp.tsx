@@ -74,6 +74,8 @@ function PlatformAppContent() {
   // Auth Method Toggle: 'sandbox' (mock login) vs 'firebase' (real Firebase login)
   const [authMethod, setAuthMethod] = useState<'sandbox' | 'firebase'>('firebase');
 
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   // Learning Generator states
   const [currentItem, setCurrentItem] = useState<KnowledgeItem | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -730,17 +732,26 @@ function PlatformAppContent() {
         setActiveTab={(tab) => {
           setActiveTab(tab);
           setCurrentItem(null); // Reset current generated cards when changing modes
+          setIsMobileSidebarOpen(false); // Close sidebar on mobile when navigating
         }} 
         user={profile} 
         onLogout={handleLogout}
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
       />
 
       {/* Main Content Pane */}
-      <main className={`flex-1 pl-72 min-h-screen relative z-10 flex flex-col inner-region-scale-${fontSize}`}>
+      <main className={`flex-1 pl-0 lg:pl-72 min-h-screen relative z-10 flex flex-col inner-region-scale-${fontSize}`}>
         {/* Top Mini Header */}
-        <header className="h-20 border-b border-white/[0.05] bg-black/10 backdrop-blur-md flex items-center justify-between px-10">
+        <header className="h-20 border-b border-white/[0.05] bg-black/10 backdrop-blur-md flex items-center justify-between px-4 md:px-10">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono font-bold tracking-widest text-[#475569] uppercase">
+            <button 
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 text-white/70 hover:text-white"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <span className="text-[10px] md:text-xs font-mono font-bold tracking-widest text-[#475569] uppercase truncate max-w-[120px] md:max-w-none">
               STATUS: CORE_ONLINE
             </span>
           </div>
@@ -764,7 +775,7 @@ function PlatformAppContent() {
         </header>
 
         {/* Dynamic Inner Tab Router */}
-        <div className="flex-grow p-10 flex flex-col justify-start">
+        <div className="flex-grow p-4 md:p-10 flex flex-col justify-start">
           <AnimatePresence mode="wait">
             {activeTab === "dashboard" && (
               <motion.div 
