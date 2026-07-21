@@ -79,6 +79,7 @@ function PlatformAppContent() {
   // Learning Generator states
   const [currentItem, setCurrentItem] = useState<KnowledgeItem | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("space");
   const [activeTabMode, setActiveTabMode] = useState<string>("fact");
   const [isLearnMode, setIsLearnMode] = useState<boolean>(true);
@@ -857,10 +858,10 @@ function PlatformAppContent() {
                     </div>
 
                     {/* Side-by-side grid split: Left column is format switcher, Right column is the Card View */}
-                    <div className="grid md:grid-cols-4 gap-8 items-start">
+                    <div className="grid md:grid-cols-4 gap-8 items-start relative">
                       
-                      {/* Left Column Format & Domain Switchers */}
-                      <div className="md:col-span-1 flex flex-col gap-6 bg-[#080816]/40 p-4 rounded-3xl border border-white/[0.05]">
+                      {/* Left Column Format & Domain Switchers (Desktop) */}
+                      <div className="hidden md:flex md:col-span-1 flex-col gap-6 bg-[#080816]/40 p-4 rounded-3xl border border-white/[0.05]">
                         
                         {/* Change Format Section */}
                         <div>
@@ -958,7 +959,7 @@ function PlatformAppContent() {
                       </div>
 
                       {/* Right Column Card Area */}
-                      <div className="md:col-span-3">
+                      <div className="col-span-1 md:col-span-3">
                         <div className="relative">
                           <AnimatePresence mode="wait">
                             {generating ? (
@@ -978,19 +979,172 @@ function PlatformAppContent() {
                                 </p>
                               </motion.div>
                             ) : (
-                               <KnowledgeCard 
-                                 key={currentItem?.id}
-                                 item={currentItem!}
-                                 onSave={handleSave}
-                                 onResponse={handleResponse}
-                                 onNext={handleNext}
-                                 onPrevious={handlePrevious}
-                                 onToggleLearnMode={(mode) => setIsLearnMode(mode)}
-                               />
+                              <motion.div
+                                drag="x"
+                                dragConstraints={{ left: 0, right: 0 }}
+                                dragElastic={0.7}
+                                onDragEnd={(e, info) => {
+                                  // Mobile Swipe Gestures
+                                  if (window.innerWidth < 768) {
+                                    if (info.offset.x < -80) {
+                                      // Swipe Left -> Next Card
+                                      handleNext();
+                                    } else if (info.offset.x > 80) {
+                                      // Swipe Right -> Previous Card
+                                      handlePrevious();
+                                    }
+                                  }
+                                }}
+                                className="touch-pan-y"
+                              >
+                                <KnowledgeCard 
+                                  key={currentItem?.id}
+                                  item={currentItem!}
+                                  onSave={handleSave}
+                                  onResponse={handleResponse}
+                                  onNext={handleNext}
+                                  onPrevious={handlePrevious}
+                                  onToggleLearnMode={(mode) => setIsLearnMode(mode)}
+                                />
+                              </motion.div>
                             )}
                           </AnimatePresence>
                         </div>
                       </div>
+
+                      {/* Mobile Floating Settings Button */}
+                      <div className="md:hidden fixed bottom-6 right-6 z-40">
+                        <button
+                          onClick={() => setIsBottomSheetOpen(true)}
+                          className="w-14 h-14 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white flex items-center justify-center shadow-[0_4px_20px_rgba(59,130,246,0.4)] hover:scale-105 active:scale-95 transition-all"
+                        >
+                          <Settings className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      {/* Mobile Bottom Sheet for Controls */}
+                      <AnimatePresence>
+                        {isBottomSheetOpen && (
+                          <>
+                            {/* Backdrop */}
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              onClick={() => setIsBottomSheetOpen(false)}
+                              className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                            />
+                            {/* Sheet Content */}
+                            <motion.div
+                              initial={{ y: "100%" }}
+                              animate={{ y: 0 }}
+                              exit={{ y: "100%" }}
+                              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                              className="md:hidden fixed bottom-0 left-0 right-0 bg-[#080816] border-t border-white/10 rounded-t-3xl p-6 z-50 max-h-[85vh] overflow-y-auto"
+                            >
+                              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6" />
+                              
+                              <h3 className="text-lg font-black text-white uppercase italic mb-6">Session Controls</h3>
+                              
+                              <div className="space-y-6">
+                                {/* Change Format Section (Mobile) */}
+                                <div>
+                                  <h4 className="text-[10px] font-bold uppercase tracking-[2px] text-[#475569] mb-3 px-2">Change Format</h4>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                      { id: "fact", label: "Fact Mode", icon: <BookOpen className="w-4 h-4" />, color: "#10b981" },
+                                      { id: "quiz", label: "Quiz Mode", icon: <Brain className="w-4 h-4" />, color: "#ec4899" },
+                                      { id: "myth", label: "Myth Debunker", icon: <Lightbulb className="w-4 h-4" />, color: "#f59e0b" },
+                                      { id: "story", label: "Storyteller", icon: <PenTool className="w-4 h-4" />, color: "#f97316" },
+                                      { id: "case_study", label: "Case", icon: <LayoutTemplate className="w-4 h-4" />, color: "#3b82f6" },
+                                      { id: "scenario", label: "Scenario", icon: <Activity className="w-4 h-4" />, color: "#06b6d4" },
+                                      { id: "logic", label: "Logic", icon: <Award className="w-4 h-4" />, color: "#8b5cf6" },
+                                      { id: "discussion", label: "Discuss", icon: <MessageSquare className="w-4 h-4" />, color: "#6366f1" },
+                                    ].map((f) => {
+                                      const isActive = activeTabMode === f.id;
+                                      return (
+                                        <button
+                                          key={f.id}
+                                          onClick={() => { handleMidSessionSwitch(f.id); setIsBottomSheetOpen(false); }}
+                                          className={`w-full flex items-center gap-2 px-3 py-3 rounded-xl text-xs font-bold text-left transition-all ${
+                                            isActive
+                                              ? "bg-white/10 text-white border border-white/10 shadow-lg shadow-white/5"
+                                              : "text-[#cbd5e1] hover:text-white bg-white/[0.02] border border-white/5"
+                                          }`}
+                                        >
+                                          <span style={{ color: isActive ? f.color : undefined }}>{f.icon}</span>
+                                          {f.label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+
+                                {/* Change Domain Section (Mobile) */}
+                                <div className="border-t border-white/[0.05] pt-4">
+                                  <h4 className="text-[10px] font-bold uppercase tracking-[2px] text-[#475569] mb-3 px-2">Change Domain</h4>
+                                  <div className="flex flex-col gap-2 mb-3 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
+                                    {activeDomains.map((d) => {
+                                      const isActive = activeCategory.toLowerCase() === d.toLowerCase();
+                                      return (
+                                        <button
+                                          key={d}
+                                          onClick={() => { handleMidSessionDomainSwitch(d); setIsBottomSheetOpen(false); }}
+                                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-left transition-all ${
+                                            isActive
+                                              ? "bg-white/10 text-white border border-white/10 shadow-lg shadow-white/5"
+                                              : "text-[#cbd5e1] hover:text-white bg-white/[0.02] border border-white/5"
+                                          }`}
+                                        >
+                                          <Globe className="w-4 h-4 text-[#3b82f6]" />
+                                          {d}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  
+                                  {/* Text input to activate any custom domain */}
+                                  <div className="space-y-2">
+                                    <input 
+                                      type="text"
+                                      value={customDomainInput}
+                                      onChange={(e) => setCustomDomainInput(e.target.value)}
+                                      placeholder="Type custom domain..."
+                                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-[#3b82f6]"
+                                    />
+                                    <button
+                                      onClick={() => { handleActivateCustomDomain(); setIsBottomSheetOpen(false); }}
+                                      className="w-full py-3 bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white font-bold text-sm rounded-xl hover:scale-[1.02] active:scale-95 transition-all"
+                                    >
+                                      Activate Domain
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Randomize Session Toggle (Mobile) */}
+                                <div className="border-t border-white/[0.05] pt-4 pb-4">
+                                  <button
+                                    onClick={() => { setIsRandomizedSession(prev => !prev); setIsBottomSheetOpen(false); }}
+                                    className={`w-full flex items-center justify-between p-4 rounded-2xl border text-sm font-bold transition-all ${
+                                      isRandomizedSession
+                                        ? "bg-purple-500/10 border-purple-500/30 text-purple-400 shadow-lg shadow-purple-500/5 animate-pulse"
+                                        : "bg-white/5 border-white/10 text-zinc-300 hover:bg-white/10"
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-2">
+                                      <Shuffle className="w-5 h-5 text-purple-400" />
+                                      Randomize Session
+                                    </span>
+                                    <span className="text-[10px] uppercase font-mono px-2 py-1 rounded-md bg-white/10">
+                                      {isRandomizedSession ? "ON" : "OFF"}
+                                    </span>
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          </>
+                        )}
+                      </AnimatePresence>
 
                     </div>
                   </div>
