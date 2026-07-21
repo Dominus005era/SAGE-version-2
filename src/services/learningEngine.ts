@@ -59,34 +59,62 @@ export async function generateMicroContent(
   }
 
   let prompt = "";
+  // Ensure the AI generates diverse, non-repetitive subtopics
+  const randomSalt = Math.floor(Math.random() * 10000);
+  const baseInstructions = `You are a highly advanced educational AI. Your task is to generate a completely unique, obscure, and specific micro-lesson about the domain: '${category}'. DO NOT use generic topics. Pick a highly specific subfield, historical event, or advanced concept (Seed: ${randomSalt}). THE ENTIRE RESPONSE MUST BE IN ${language.toUpperCase()}.`;
+
   if (mode === "fact") {
-    prompt = `Generate a highly detailed, rich, educational micro-fact about ${category}. It must contain 5-6 comprehensive sentences (+1 to 2 extra lines of knowledge) detailing the exact physical, chemical, or biological mechanisms. THE ENTIRE RESPONSE MUST BE IN ${language.toUpperCase()}.`;
+    prompt = `${baseInstructions}
+FORMAT: FACT
+Generate a highly detailed, rich, educational micro-fact. It must contain 5-6 comprehensive sentences detailing exact physical, chemical, historical, or theoretical mechanisms. Focus on depth, not surface-level summaries.`;
   } else if (mode === "story") {
-    prompt = `Generate a captivating story card about ${category}. Provide 5-6 sentences of historical/future story narrative. ALSO provide 3-4 comprehension quiz options with 1 correct option index so the card can be toggled between Learn and Test modes. THE ENTIRE RESPONSE MUST BE IN ${language.toUpperCase()}.`;
+    prompt = `${baseInstructions}
+FORMAT: STORY
+Generate a captivating story card. Provide 5-6 sentences of a historical, futuristic, or hypothetical narrative involving specific characters or specific events. ALSO provide 3-4 comprehension quiz options with 1 correct option index (0-indexed).`;
   } else if (mode === "myth") {
-    prompt = `Generate a famous misconception card about ${category}. Provide "mythText" (2-3 lines explaining misconception) and "truthText" (2-3 lines detailing scientific truth). ALSO provide 3-4 selectable quiz options for Test Mode. THE ENTIRE RESPONSE MUST BE IN ${language.toUpperCase()}.`;
+    prompt = `${baseInstructions}
+FORMAT: MYTH DEBUNKER
+Identify a specific, widely believed misconception in this domain. Provide "mythText" (2-3 lines explaining the misconception) and "truthText" (2-3 lines detailing the scientific/historical truth). ALSO provide 3-4 selectable quiz options testing this specific truth.`;
   } else if (mode === "case_study") {
-    prompt = `Generate a deep-dive case study card about ${category}. Provide 5-6 sentences of case analysis narrative. ALSO provide 3-4 decision/root-cause quiz options. THE ENTIRE RESPONSE MUST BE IN ${language.toUpperCase()}.`;
+    prompt = `${baseInstructions}
+FORMAT: CASE STUDY
+Generate a deep-dive case study. Provide 5-6 sentences analyzing a specific real-world application, failure, or breakthrough. ALSO provide 3-4 decision/root-cause quiz options evaluating the case.`;
   } else if (mode === "discussion") {
-    prompt = `Generate a controversial debate thesis about ${category}. Present two opposing perspectives in 5-6 balanced sentences. Provide 3 options/perspectives for evaluation. THE ENTIRE RESPONSE MUST BE IN ${language.toUpperCase()}.`;
+    prompt = `${baseInstructions}
+FORMAT: DISCUSSION
+Generate a controversial debate thesis or ethical dilemma. Present two opposing perspectives in 5-6 balanced sentences. Provide 3 options representing different philosophical or practical stances.`;
+  } else if (mode === "quiz") {
+    prompt = `${baseInstructions}
+FORMAT: QUIZ
+Generate a pure trivia or knowledge-based quiz question. The content should provide 4-5 sentences of context leading up to a specific question. Provide 3-4 plausible options and 1 correct option index. DO NOT frame this as a "Scenario Assessment".`;
+  } else if (mode === "scenario") {
+    prompt = `${baseInstructions}
+FORMAT: SCENARIO
+Create a high-stakes, interactive simulation or roleplay scenario. Put the reader in a specific situation requiring a critical decision in 5-6 sentences. Provide 3-4 action-based options and 1 correct optimal choice.`;
+  } else if (mode === "logic") {
+    prompt = `${baseInstructions}
+FORMAT: LOGIC PUZZLE
+Create a complex deduction, math, or structural logic puzzle related to the domain. Provide 4-5 sentences setting up the parameters. Provide 3-4 options and 1 correct answer.`;
   } else {
-    prompt = `Generate an interactive card for ${category} in ${mode} mode. Provide a title, 5-6 detailed sentences of context, 3-4 options, correct option index, and explanation. THE ENTIRE RESPONSE MUST BE IN ${language.toUpperCase()}.`;
+    prompt = `${baseInstructions}
+FORMAT: INTERACTIVE
+Generate an interactive educational card. Provide a title, 5-6 detailed sentences of context, 3-4 options, correct option index, and explanation.`;
   }
 
   const schema = {
     type: Type.OBJECT,
     properties: {
-      title: { type: Type.STRING },
-      content: { type: Type.STRING },
-      mythText: { type: Type.STRING, description: "Detailed 2-3 lines of misconception" },
-      truthText: { type: Type.STRING, description: "Detailed 2-3 lines of scientific truth" },
+      title: { type: Type.STRING, description: "A catchy, highly specific 3-6 word title." },
+      content: { type: Type.STRING, description: "The main body text (5-6 sentences minimum)." },
+      mythText: { type: Type.STRING, description: "Detailed 2-3 lines of misconception (only if myth mode)" },
+      truthText: { type: Type.STRING, description: "Detailed 2-3 lines of scientific truth (only if myth mode)" },
       options: { 
         type: Type.ARRAY, 
         items: { type: Type.STRING },
         description: "3-4 options for test mode"
       },
-      correctOptionIndex: { type: Type.INTEGER },
-      explanation: { type: Type.STRING }
+      correctOptionIndex: { type: Type.INTEGER, description: "0-based index of the correct option" },
+      explanation: { type: Type.STRING, description: "1-2 sentences explaining why the correct option is right." }
     },
     required: ["title", "content", "explanation"]
   };
@@ -117,34 +145,43 @@ export async function generateMicroContent(
 
     markCardSeen(card);
     return card;
-  } catch (error) {
-    console.error("Gemini Engine Error:", error);
+  } catch (error: any) {
+    console.error("Gemini Engine Error (Falling back to dynamic mock):", error.message || error);
     const mock = getLocalMockItem(category, mode, isLearnMode);
     markCardSeen(mock);
     return mock;
   }
 }
 
+// -----------------------------------------------------------------------------
+// DYNAMIC MOCK GENERATOR (Fallback when API fails or quota exceeded)
+// -----------------------------------------------------------------------------
 function getLocalMockItem(category: Category, mode: string, isLearnMode: boolean = false): KnowledgeItem {
   const seenCards = getSeenCards();
   const seenKeys = new Set(seenCards.map(s => `${s.mode}:${s.category}:${s.title}`.toLowerCase()));
+
+  // Dynamic prefix/suffix generation for completely unknown/custom domains
+  const dynamicPrefixes = ["Advanced", "Theoretical", "Applied", "Experimental", "Foundational", "Critical", "Modern", "Quantum", "Cognitive", "Systems", "Automated"];
+  const dynamicSuffixes = ["Dynamics", "Mechanics", "Protocols", "Optimization", "Synthesis", "Analysis", "Architecture", "Frameworks", "Integration", "Paradigm"];
+  
+  const randomDynamicTopic = () => {
+    const p = dynamicPrefixes[Math.floor(Math.random() * dynamicPrefixes.length)];
+    const s = dynamicSuffixes[Math.floor(Math.random() * dynamicSuffixes.length)];
+    return `${p} ${category} ${s}`;
+  };
 
   // Procedural topics map per domain & fallback for custom domains
   const domainTopics: Record<string, string[]> = {
     space: ["Orbital Dynamics", "Black Hole Event Horizons", "Neutron Star Pulsars", "Apollo Lunar Descents", "Mars Terraforming Protocols", "Cosmic Microwave Background", "Exoplanet Atmospheres", "James Webb Deep Field Analysis"],
     science: ["Quantum Entanglement", "Graphene Superconductors", "Nuclear Fusion Magnetic Confinement", "Thermodynamic Entropy", "CRISPR Gene Editing", "Particle Accelerator Collisions", "Photonic Computing", "Nanomaterial Lattices"],
     nature: ["Mycelium Communication Networks", "Tardigrade Cryptobiosis", "Yellowstone Trophic Cascades", "Bioluminescent Counter-Illumination", "Deep-Sea Hydrothermal Vents", "Avian Magnetoreception Navigation", "Ecosystem Resilience", "Photosynthetic Energy Conversion"],
-    brain: ["Synaptic Pruning Optimization", "Neuroplastic Rewiring", "Prefrontal Cortex Decision Loops", "Hippocampal Memory Consolidation", "Phineas Gage Frontal Lobe Case", "Dopaminergic Feedback Loops", "Neuralink Brain-Computer Interfaces", "Circadian Rhythm Gene Regulation"]
+    brain: ["Synaptic Pruning Optimization", "Neuroplastic Rewiring", "Prefrontal Cortex Decision Loops", "Hippocampal Memory Consolidation", "Phineas Gage Frontal Lobe Case", "Dopaminergic Feedback Loops", "Neuralink Brain-Computer Interfaces", "Circadian Rhythm Gene Regulation"],
+    ai: ["Transformer Attention Mechanisms", "Gradient Descent Optimization", "Generative Adversarial Networks", "Reinforcement Learning Rewards", "Backpropagation Calculus", "Few-Shot Prompt Engineering", "Vector Database Retrieval", "Algorithmic Bias Mitigation"],
+    edtech: ["Adaptive Spaced Repetition", "Constructivist Learning Environments", "Gamified Skill Trees", "Cognitive Load Theory", "Flipped Classroom Models", "Formative Assessment Algorithms", "Zone of Proximal Development", "Micro-Learning Retention Rates"]
   };
 
   const catLower = category.toLowerCase();
-  const topicList = domainTopics[catLower] || [
-    `${category} Fundamental Mechanics`,
-    `${category} Critical Breakthroughs`,
-    `${category} Operational Systems`,
-    `${category} Strategic Analysis`,
-    `${category} Historical Milestones`
-  ];
+  const topicList = domainTopics[catLower] || Array.from({length: 8}, () => randomDynamicTopic());
 
   let chosenTopic = topicList[Math.floor(Math.random() * topicList.length)];
   let attempts = 0;
@@ -164,74 +201,90 @@ function getLocalMockItem(category: Category, mode: string, isLearnMode: boolean
   let correctOptionIndex: number | undefined = undefined;
   let explanation = "";
 
+  // Template arrays for diversity
+  const factOpeners = [
+    `An in-depth examination of ${chosenTopic} reveals fascinating structural dependencies within ${category}.`,
+    `Recent breakthroughs in ${category} have fundamentally shifted our understanding of ${chosenTopic}.`,
+    `The underlying mechanics of ${chosenTopic} demonstrate a highly complex interaction of variables.`
+  ];
+  const factBodies = [
+    `By isolating specific parameters, researchers observed that feedback loops dictate overall stability. When thresholds are breached, the system rapidly adapts to dissipate excess energy or information. This adaptive stabilization ensures long-term viability under extreme stress.`,
+    `Empirical data shows that initial assumptions regarding its linearity were incorrect. In reality, the architecture relies on distributed nodes that share cognitive or physical load. This decentralized approach prevents single points of failure.`,
+    `At the micro-level, interactions are governed by probabilistic equations rather than absolute determinism. This allows for a degree of flexibility and mutation, which is essential for evolutionary or developmental progress over time.`
+  ];
+
   if (mode === "fact") {
-    content = `Comprehensive analysis of ${chosenTopic} in ${category}. Empirical observations reveal that fundamental mechanisms operate on complex feedback loops. When environmental or structural stress is applied, the underlying system balances energy dissipation with adaptive stabilization. This allows ${chosenTopic} to preserve structural integrity over extended periods. Modern research continues to optimize our mathematical models of these dynamics to unlock advanced applications.`;
-    explanation = `The core mechanics of ${chosenTopic} demonstrate how physical, biological, or structural laws dictate system stability under varying external parameters.`;
+    content = `${factOpeners[Math.floor(Math.random() * factOpeners.length)]} ${factBodies[Math.floor(Math.random() * factBodies.length)]} Modern models are currently being updated to incorporate these newly discovered dynamics.`;
+    explanation = `The core principles of ${chosenTopic} highlight how systemic adaptation drives resilience.`;
+  } else if (mode === "quiz") {
+    content = `Knowledge Check: In the context of ${chosenTopic} within ${category}, which of the following mechanisms is primarily responsible for preventing systemic degradation over extended operational periods?`;
+    options = [
+      "Dynamic load balancing and adaptive feedback loops",
+      "Strict linear processing of isolated variables",
+      "Elimination of all external environmental interactions"
+    ];
+    correctOptionIndex = 0;
+    explanation = "Adaptive feedback loops allow the system to self-correct and distribute stress efficiently.";
   } else if (mode === "story") {
-    content = `Historical Micro-Story: During the initial breakthrough in ${chosenTopic}, researchers faced an unexpected failure when baseline assumptions collapsed under experimental testing. Instead of abandoning the hypothesis, the lead team isolated the root variable, making a pivotal discovery. This single event reshaped how humanity understands ${category}, paving the way for revolutionary modern applications.`;
+    content = `Historical Narrative: During the early stages of exploring ${chosenTopic}, the lead research team encountered a catastrophic anomaly. The primary framework collapsed under testing. Instead of reverting to old models, they embraced the anomaly, discovering a hidden variable that completely revolutionized ${category}.`;
     options = [
-      "Isolating the failing subsystem immediately and updating models",
-      "Increasing throughput power to override systemic feedback",
-      "Terminating the research program entirely"
+      "They discovered a hidden variable by embracing the anomaly",
+      "They abandoned the project due to funding cuts",
+      "They reverted to the previous, stable model"
     ];
     correctOptionIndex = 0;
-    explanation = "Isolating the failing subsystem and updating models allowed the team to discover the underlying principle.";
+    explanation = "Embracing anomalies often leads to paradigm-shifting discoveries.";
   } else if (mode === "myth") {
-    mythText = `Myth: It is widely believed that ${chosenTopic} operates linearly without loss of efficiency over time.`;
-    truthText = `Truth: Rigorous testing shows that ${chosenTopic} is governed by non-linear decay laws, requiring continuous structural or energetic inputs to maintain equilibrium.`;
-    content = `Challenge: Common misconceptions claim that ${chosenTopic} operates linearly without efficiency loss. Which statement represents the scientific truth?`;
+    mythText = `Myth: It is widely assumed that ${chosenTopic} operates independently of external variables.`;
+    truthText = `Truth: Extensive studies prove that ${chosenTopic} is deeply entangled with its environment, requiring constant recalibration.`;
+    content = `Challenge: A common misconception plagues the study of ${chosenTopic}. Which statement represents the actual scientific consensus?`;
     options = [
-      `It operates linearly under all physical conditions`,
-      `It is governed by non-linear decay laws requiring continuous equilibrium control`,
-      `It operates independent of physical energy limits`
-    ];
-    correctOptionIndex = 1;
-    explanation = `Non-linear dynamics govern ${chosenTopic}, dispelling the myth of frictionless linear operation.`;
-  } else if (mode === "case_study") {
-    content = `Deep-Dive Case Study: Analysis of ${chosenTopic} reveals a classic structural bottleneck. Initially, early prototypes failed due to unforeseen stress concentration along key boundaries. By redesigning the internal architecture to distribute load dynamically, efficiency increased by 340%. This case study serves as a benchmark for modern engineering in ${category}.`;
-    options = [
-      "Stress concentration along unreinforced boundary joints",
-      "Excessive fluid cooling in secondary reservoirs",
-      "Over-simplification of atmospheric pressure parameters"
+      `It requires constant recalibration with external variables`,
+      `It operates in a completely isolated, independent state`,
+      `It ignores environmental feedback entirely`
     ];
     correctOptionIndex = 0;
-    explanation = "Post-mortem failure analysis proved unreinforced boundary joints created lethal stress concentration points.";
-  } else if (mode === "discussion") {
-    content = `Debate Thesis: Should humanity aggressively accelerate industrial implementation of ${chosenTopic} in ${category}, or mandate global precautionary delays until multi-decadal safety frameworks are ratified?`;
+    explanation = `The truth of ${chosenTopic} relies on continuous environmental interaction.`;
+  } else if (mode === "case_study") {
+    content = `Case Analysis: A recent implementation of ${chosenTopic} in a high-stress environment yielded unexpected results. Efficiency dropped by 40% in the first week. Upon investigation, engineers found that the integration layer lacked sufficient buffering capacity for rapid data spikes.`;
     options = [
-      "Accelerate deployment to solve urgent resource bottlenecks",
-      "Mandate precautionary delays to mitigate unknown systemic risks",
-      "Implement a hybrid framework with real-time sandbox regulation"
+      "Insufficient buffering capacity in the integration layer",
+      "Over-optimization of the primary processing core",
+      "Lack of user engagement during the testing phase"
+    ];
+    correctOptionIndex = 0;
+    explanation = "The bottleneck was identified at the integration layer due to poor buffering.";
+  } else if (mode === "discussion") {
+    content = `Ethical Dilemma: As ${chosenTopic} becomes increasingly powerful, experts are divided. Should we mandate strict, global regulations that could slow innovation, or encourage unregulated open-source development to accelerate progress in ${category}?`;
+    options = [
+      "Implement strict global regulations",
+      "Encourage unregulated open-source development",
+      "Adopt a tiered framework balancing safety and innovation"
     ];
     correctOptionIndex = 2;
-    explanation = "A hybrid framework balances rapid technological innovation with real-time safety sandboxing.";
+    explanation = "A tiered framework is widely considered the most pragmatic approach to emerging paradigms.";
   } else if (mode === "scenario") {
-    content = `High-Stakes Simulation: You are managing a critical facility operating ${chosenTopic}. Primary containment sensors trigger a red alert. Pressure is spiking by 15% per second. What is your immediate command?`;
+    content = `Simulation: You are overseeing a critical deployment involving ${chosenTopic}. Suddenly, the primary metrics indicate a cascading desynchronization event. You have 10 seconds to issue a command. What is your priority action?`;
     options = [
-      "Inject emergency suppression fluid and isolate Section 4",
-      "Override safety locks and attempt manual valve adjustments",
-      "Vent all atmospheric gases into the external environment"
+      "Initiate an emergency localized shutdown to isolate the cascade",
+      "Increase power throughput to force resynchronization",
+      "Run a full diagnostic scan while monitoring the system"
     ];
     correctOptionIndex = 0;
-    explanation = "Protocol dictates immediate automated injection of suppression fluid to prevent thermal runaway.";
+    explanation = "Isolating a cascading failure immediately prevents global system collapse.";
   } else if (mode === "logic") {
-    content = `Structural Deduction Puzzle: System A, B, and C govern ${chosenTopic}. System A activates every 3 cycles, System B every 5 cycles, and System C every 15 cycles. If all three activate simultaneously on Cycle 1, on which cycle will they next activate together?`;
-    options = ["Cycle 15", "Cycle 16", "Cycle 30"];
+    content = `Logic Puzzle: System X handles ${chosenTopic}. It processes 2 units every 3 minutes. System Y processes 3 units every 4 minutes. If they start simultaneously, how many total units will they have processed after 12 minutes?`;
+    options = ["15 units", "17 units", "24 units"];
     correctOptionIndex = 1;
-    explanation = "The Least Common Multiple (LCM) of 3, 5, and 15 is 15. Adding 15 to the initial alignment at Cycle 1 yields Cycle 16.";
+    explanation = "System X completes 4 cycles (8 units). System Y completes 3 cycles (9 units). Total = 17 units.";
   } else {
-    // Quiz default
-    content = `Scenario Assessment: When applying ${chosenTopic} to high-density environments in ${category}, which factor provides the greatest performance stabilization?`;
-    options = [
-      "Dynamic load distribution across decentralized nodes",
-      "Single-point centralized processing",
-      "Eliminating safety feedback loops"
-    ];
+    content = `General Assessment: Evaluate the primary function of ${chosenTopic} within the broader ecosystem of ${category}.`;
+    options = ["Adaptive regulation", "Static storage", "Linear degradation"];
     correctOptionIndex = 0;
-    explanation = "Decentralized load distribution prevents single points of failure and enhances overall structural stability.";
+    explanation = "Adaptive regulation is the defining characteristic of this mechanism.";
   }
 
-  const card: KnowledgeItem = {
+  return {
     id: crypto.randomUUID(),
     type: mode as any,
     category,
@@ -246,6 +299,5 @@ function getLocalMockItem(category: Category, mode: string, isLearnMode: boolean
     createdAt: new Date().toISOString(),
     imageUrl: `https://picsum.photos/seed/${seedStr}/800/450`
   };
-
-  return card;
 }
+
